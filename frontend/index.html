@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>NeuroKinetic — 3D Physical AI Digital Twin & Safety Mission Control</title>
+  <title>NeuroKinetic — Multi-Domain Physical AI Digital Twin & Safety Control</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
@@ -11,46 +11,63 @@
     #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
     .hud-panel {
-      position: absolute; z-index: 10; background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.8);
-      border-radius: 10px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      position: absolute; z-index: 10; background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px); border: 1px solid rgba(51, 65, 85, 0.85);
+      border-radius: 10px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
-    #header-panel { top: 20px; left: 20px; width: 420px; }
+    #header-panel { top: 20px; left: 20px; width: 440px; }
     #telemetry-panel { top: 20px; right: 20px; width: 380px; }
-    #control-panel { bottom: 20px; left: 20px; width: 420px; }
+    #tuning-panel { bottom: 20px; right: 20px; width: 380px; }
+    #control-panel { bottom: 20px; left: 20px; width: 440px; }
 
-    h1 { font-size: 18px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 12px; }
+    h1 { font-size: 17px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
     
     .badge {
-      display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;
-      margin-right: 6px; letter-spacing: 0.5px;
+      display: inline-block; padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;
+      margin-right: 4px; letter-spacing: 0.5px;
     }
     .badge-cxx { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
     .badge-fno { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-    .badge-cbf { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .badge-watchdog { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; }
 
-    .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 12px; }
+    .persona-toggle {
+      display: flex; gap: 6px; margin: 10px 0; background: #1e293b; padding: 4px; border-radius: 8px;
+    }
+    .persona-btn {
+      flex: 1; padding: 6px; border: none; background: transparent; color: #94a3b8; font-size: 11px;
+      font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+    }
+    .persona-btn.active { background: #0284c7; color: white; }
+
+    .metric-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1e293b; font-size: 12px; }
     .metric-label { color: #94a3b8; }
     .metric-val { font-weight: 700; color: #f8fafc; font-family: monospace; }
     
     .clamp-alert {
-      padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: 800; font-size: 13px;
+      padding: 9px; border-radius: 6px; margin-top: 8px; text-align: center; font-weight: 800; font-size: 12px;
       background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; transition: all 0.2s;
     }
     .clamp-alert.active {
       background: rgba(239, 68, 68, 0.3); color: #fca5a5; border-color: #ef4444; animation: pulse 0.8s infinite;
     }
+    .clamp-alert.watchdog {
+      background: rgba(217, 119, 6, 0.3); color: #fde68a; border-color: #d97706;
+    }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-    button {
-      background: #0284c7; color: white; border: none; padding: 10px 16px; border-radius: 6px;
-      font-weight: 700; font-size: 12px; cursor: pointer; transition: background 0.2s; width: 48%;
+    .slider-container { margin-top: 8px; }
+    .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+
+    button.action {
+      background: #0284c7; color: white; border: none; padding: 9px 14px; border-radius: 6px;
+      font-weight: 700; font-size: 11px; cursor: pointer; transition: background 0.2s; width: 48%;
     }
-    button:hover { background: #0369a1; }
-    button.hazard { background: #dc2626; }
-    button.hazard:hover { background: #b91c1c; }
-    .btn-row { display: flex; justify-content: space-between; margin-top: 12px; }
+    button.action:hover { background: #0369a1; }
+    button.action.hazard { background: #dc2626; }
+    button.action.hazard:hover { background: #b91c1c; }
+    .btn-row { display: flex; justify-content: space-between; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -58,37 +75,71 @@
 
   <div class="hud-panel" id="header-panel">
     <h1>NEUROKINETIC PHYSICAL AI</h1>
-    <div class="subtitle">500 Hz C++23 Safety Kernel & 50 Hz FNO Digital Twin</div>
+    <div class="subtitle">Multi-Domain Deterministic Safety &amp; FNO Digital Twin</div>
     <div>
-      <span class="badge badge-cxx">500 Hz C++23 KERNEL</span>
+      <span class="badge badge-cxx">500 Hz C++23</span>
       <span class="badge badge-fno">FNO SURROGATE</span>
-      <span class="badge badge-cbf">ACTIVE CBF QP</span>
+      <span class="badge badge-watchdog" id="watchdog-badge">WATCHDOG: ARMED</span>
     </div>
+
+    <!-- Domain Persona Switcher -->
+    <div class="persona-toggle">
+      <button class="persona-btn active" id="btn-arm" onclick="setPersona('ARM')">7-DOF Arm</button>
+      <button class="persona-btn" id="btn-car" onclick="setPersona('CAR')">Cybercab / AV</button>
+      <button class="persona-btn" id="btn-drone" onclick="setPersona('DRONE')">Delivery Drone</button>
+    </div>
+
     <div class="clamp-alert" id="clamp-status">STATUS: NOMINAL / SAFE INVARIANT PRESERVED</div>
   </div>
 
+  <!-- Real-Time Dynamic Telemetry Panel -->
   <div class="hud-panel" id="telemetry-panel">
-    <div class="metric-row"><span class="metric-label">500 Hz Kernel Tick</span><span class="metric-val" id="val-tick">0</span></div>
-    <div class="metric-row"><span class="metric-label">Joint 5 Position</span><span class="metric-val" id="val-pos5">0.000 rad</span></div>
-    <div class="metric-row"><span class="metric-label">Joint 5 Applied Torque</span><span class="metric-val" id="val-torque5">0.00 Nm</span></div>
-    <div class="metric-row"><span class="metric-label">Obstacle Barrier Margin</span><span class="metric-val" id="val-margin">0.000 m</span></div>
-    <div class="metric-row"><span class="metric-label">Peak Structural Stress</span><span class="metric-val" id="val-stress">0.0 MPa</span></div>
-    <div class="metric-row"><span class="metric-label">Peak Joint Temperature</span><span class="metric-val" id="val-temp">0.0 °C</span></div>
-    <div class="metric-row"><span class="metric-label">FNO Surrogate Latency</span><span class="metric-val" id="val-fno">0.00 ms</span></div>
+    <div class="subtitle" style="margin-bottom: 4px;">SYSTEM TELEMETRY</div>
+    <div class="metric-row"><span class="metric-label" id="lbl-tick">500 Hz Kernel Tick</span><span class="metric-val" id="val-tick">0</span></div>
+    <div class="metric-row"><span class="metric-label" id="lbl-kinematic">Joint 5 Applied Torque</span><span class="metric-val" id="val-kinematic">0.00 Nm</span></div>
+    <div class="metric-row"><span class="metric-label" id="lbl-pos">Joint 5 Position</span><span class="metric-val" id="val-pos">0.000 rad</span></div>
+    <div class="metric-row"><span class="metric-label" id="lbl-margin">Safety Barrier Clearance</span><span class="metric-val" id="val-margin">0.000 m</span></div>
+    <div class="metric-row"><span class="metric-label" id="lbl-stress">Peak Structural Stress</span><span class="metric-val" id="val-stress">0.0 MPa</span></div>
+    <div class="metric-row"><span class="metric-label">Peak Temperature</span><span class="metric-val" id="val-temp">0.0 °C</span></div>
+    <div class="metric-row"><span class="metric-label">FNO Physics Latency</span><span class="metric-val" id="val-fno">0.00 ms</span></div>
   </div>
 
+  <!-- Interactive Control Barrier Tuning Sliders -->
+  <div class="hud-panel" id="tuning-panel">
+    <div class="subtitle" style="margin-bottom: 4px;">ACTIVE CBF CONSTRAINT TUNING</div>
+    
+    <div class="slider-container">
+      <div class="slider-header">
+        <span>Obstacle Bubble Margin:</span>
+        <span id="slider-margin-val" style="color: #38bdf8; font-weight:700;">0.08 m</span>
+      </div>
+      <input type="range" id="input-margin" min="0.02" max="0.25" step="0.01" value="0.08" oninput="onTuningChange()">
+    </div>
+
+    <div class="slider-container" style="margin-top: 10px;">
+      <div class="slider-header">
+        <span>Barrier Stiffness (Gamma):</span>
+        <span id="slider-gamma-val" style="color: #38bdf8; font-weight:700;">15.0</span>
+      </div>
+      <input type="range" id="input-gamma" min="5.0" max="40.0" step="1.0" value="15.0" oninput="onTuningChange()">
+    </div>
+  </div>
+
+  <!-- Interactive Stress Test Panel -->
   <div class="hud-panel" id="control-panel">
-    <div class="subtitle" style="margin-bottom: 6px;">PHYSICAL INVARIANT STRESS TEST</div>
-    <p style="font-size: 11px; color: #94a3b8; line-height: 15px;">
-      Simulate an unconstrained VLA policy commanding hazardous torque (+45 Nm) directly into the obstacle zone. Observe C++ CBF overriding torques while FNO monitors localized stress.
+    <div class="subtitle" style="margin-bottom: 4px;">PHYSICAL INVARIANT STRESS TEST</div>
+    <p style="font-size: 11px; color: #94a3b8; line-height: 14px;" id="lbl-scenario-desc">
+      Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone to observe real-time CBF active-set clamping.
     </p>
     <div class="btn-row">
-      <button class="hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
-      <button onclick="triggerReset()">HOLD / ZERO TORQUE</button>
+      <button class="action hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
+      <button class="action" onclick="triggerReset()">HOLD / ZERO TORQUE</button>
     </div>
   </div>
 
   <script>
+    let currentPersona = 'ARM';
+
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b0f19);
@@ -105,21 +156,21 @@
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
     const grid = new THREE.GridHelper(6, 30, 0x334155, 0x1e293b);
-    grid.position.y = 0;
     scene.add(grid);
 
+    // 7-DOF Robotic Arm Model
+    const armGroup = new THREE.Group();
     const joints = [];
     const links = [];
     const linkLengths = [0.35, 0.40, 0.35, 0.35, 0.25, 0.20, 0.15];
 
-    let parentObj = scene;
+    let parentObj = armGroup;
     for (let i = 0; i < 7; i++) {
       const jointGroup = new THREE.Group();
       if (i === 0) jointGroup.position.set(0, 0.05, 0);
@@ -131,33 +182,37 @@
       linkMesh.position.set(0, linkLengths[i] / 2, 0);
       jointGroup.add(linkMesh);
 
-      const pivotGeom = new THREE.SphereGeometry(0.065, 16, 16);
-      const pivotMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 });
-      const pivotMesh = new THREE.Mesh(pivotGeom, pivotMat);
+      const pivotMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.065, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 })
+      );
       jointGroup.add(pivotMesh);
 
       parentObj.add(jointGroup);
       parentObj = jointGroup;
-
       joints.push(jointGroup);
       links.push(linkMesh);
     }
+    scene.add(armGroup);
 
+    // Obstacle & Barrier Wireframe Bubble
     const obsPos = new THREE.Vector3(0.50, 0.45, 0.30);
-    const obsGeom = new THREE.SphereGeometry(0.08, 32, 32);
-    const obsMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5 });
-    const obsMesh = new THREE.Mesh(obsGeom, obsMat);
+    const obsMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 32, 32),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5 })
+    );
     obsMesh.position.copy(obsPos);
     scene.add(obsMesh);
 
-    const bubbleGeom = new THREE.SphereGeometry(0.16, 32, 32);
-    const bubbleMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 });
-    const bubbleMesh = new THREE.Mesh(bubbleGeom, bubbleMat);
+    let bubbleMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
+    );
     bubbleMesh.position.copy(obsPos);
     scene.add(bubbleMesh);
 
+    // WebSocket Telemetry Ingestion
     const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
-    
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
@@ -170,15 +225,18 @@
       }
 
       document.getElementById('val-tick').innerText = data.sequence.toLocaleString();
-      document.getElementById('val-pos5').innerText = `${data.positions[5].toFixed(3)} rad`;
-      document.getElementById('val-torque5').innerText = `${data.torques[5].toFixed(2)} Nm`;
+      document.getElementById('val-pos').innerText = `${data.positions[5].toFixed(3)} rad`;
+      document.getElementById('val-kinematic').innerText = `${data.torques[5].toFixed(2)} Nm`;
       document.getElementById('val-margin').innerText = `${data.barrier_margin.toFixed(3)} m`;
       document.getElementById('val-stress').innerText = `${data.max_stress.toFixed(1)} MPa`;
       document.getElementById('val-temp').innerText = `${data.max_temp.toFixed(1)} °C`;
       document.getElementById('val-fno').innerText = `${data.fno_eval_ms} ms`;
 
       const clampEl = document.getElementById('clamp-status');
-      if (data.clamped) {
+      if (data.watchdog_tripped) {
+        clampEl.innerText = "FAIL-SAFE ENGAGED: UPSTREAM HEARTBEAT TIMEOUT";
+        clampEl.className = "clamp-alert watchdog";
+      } else if (data.clamped) {
         clampEl.innerText = "WARNING: CBF ACTIVE — TORQUE OVERRIDDEN";
         clampEl.className = "clamp-alert active";
       } else {
@@ -187,12 +245,58 @@
       }
     };
 
-    function triggerHazard() {
-      fetch('/api/v1/actuate/hazard', { method: 'POST' });
+    function onTuningChange() {
+      const margin = parseFloat(document.getElementById('input-margin').value);
+      const gamma = parseFloat(document.getElementById('input-gamma').value);
+
+      document.getElementById('slider-margin-val').innerText = `${margin.toFixed(2)} m`;
+      document.getElementById('slider-gamma-val').innerText = `${gamma.toFixed(1)}`;
+
+      // Resize visual wireframe barrier bubble dynamically
+      scene.remove(bubbleMesh);
+      bubbleMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08 + margin, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
+      );
+      bubbleMesh.position.copy(obsPos);
+      scene.add(bubbleMesh);
+
+      fetch('/api/v1/tuning/barrier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ safety_margin: margin, gamma: gamma })
+      });
     }
-    function triggerReset() {
-      fetch('/api/v1/actuate/reset', { method: 'POST' });
+
+    function setPersona(persona) {
+      currentPersona = persona;
+      document.getElementById('btn-arm').className = `persona-btn ${persona === 'ARM' ? 'active' : ''}`;
+      document.getElementById('btn-car').className = `persona-btn ${persona === 'CAR' ? 'active' : ''}`;
+      document.getElementById('btn-drone').className = `persona-btn ${persona === 'DRONE' ? 'active' : ''}`;
+
+      if (persona === 'CAR') {
+        document.getElementById('lbl-kinematic').innerText = "Steering & Drive Torque";
+        document.getElementById('lbl-pos').innerText = "Steering Angle (rad)";
+        document.getElementById('lbl-margin').innerText = "Forward Time-To-Collision (TTC)";
+        document.getElementById('lbl-stress').innerText = "Tire Friction Circle Use";
+        document.getElementById('lbl-scenario-desc').innerText = "Simulate Cybercab vision obstruction triggering emergency Drive-by-Wire CBF braking before obstacle impact.";
+      } else if (persona === 'DRONE') {
+        document.getElementById('lbl-kinematic').innerText = "Rotor Thrust Output (N)";
+        document.getElementById('lbl-pos').innerText = "Pitch / Tilt Angle (rad)";
+        document.getElementById('lbl-margin').innerText = "3D Geofence Buffer (m)";
+        document.getElementById('lbl-stress').innerText = "Motor Coil Joule Heating";
+        document.getElementById('lbl-scenario-desc').innerText = "Simulate severe wind gust turbulence pushing the delivery drone toward a structure keep-out perimeter.";
+      } else {
+        document.getElementById('lbl-kinematic').innerText = "Joint 5 Applied Torque";
+        document.getElementById('lbl-pos').innerText = "Joint 5 Position";
+        document.getElementById('lbl-margin').innerText = "Safety Barrier Clearance";
+        document.getElementById('lbl-stress').innerText = "Peak Structural Stress";
+        document.getElementById('lbl-scenario-desc').innerText = "Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone.";
+      }
     }
+
+    function triggerHazard() { fetch('/api/v1/actuate/hazard', { method: 'POST' }); }
+    function triggerReset() { fetch('/api/v1/actuate/reset', { method: 'POST' }); }
 
     function animate() {
       requestAnimationFrame(animate);
