@@ -7,13 +7,14 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
-    body { background: #0b0f19; color: #f1f5f9; overflow: hidden; }
+    body { background: #f8fafc; color: #0f172a; overflow: hidden; }
     #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
+    /* Daylight Studio HUD Panels */
     .hud-panel {
-      position: absolute; z-index: 10; background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(14px); border: 1px solid rgba(51, 65, 85, 0.85);
-      border-radius: 10px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      position: absolute; z-index: 10; background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px); border: 1px solid rgba(203, 213, 225, 0.9);
+      border-radius: 10px; padding: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
     }
     #header-panel { top: 20px; left: 20px; width: 440px; }
     #telemetry-panel { top: 20px; right: 20px; width: 380px; }
@@ -24,61 +25,69 @@
       display: flex; flex-direction: column; justify-content: space-between;
     }
 
-    h1 { font-size: 17px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+    h1 { font-size: 17px; font-weight: 800; color: #0284c7; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .subtitle { font-size: 11px; color: #64748b; margin-bottom: 10px; font-weight: 600; }
     
+    /* Daylight Badges */
     .badge {
       display: inline-block; padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;
       margin-right: 4px; letter-spacing: 0.5px;
     }
-    .badge-cxx { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
-    .badge-fno { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-    .badge-watchdog { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #0284c7; }
+    .badge-cxx { background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid #c084fc; }
+    .badge-fno { background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid #6ee7b7; }
+    .badge-watchdog { background: rgba(2, 132, 199, 0.12); color: #0369a1; border: 1px solid #7dd3fc; }
 
+    /* Persona Switcher Tabs */
     .persona-toggle {
-      display: flex; gap: 6px; margin: 10px 0; background: #1e293b; padding: 4px; border-radius: 8px;
+      display: flex; gap: 6px; margin: 10px 0; background: #f1f5f9; padding: 4px; border-radius: 8px;
+      border: 1px solid #e2e8f0;
     }
     .persona-btn {
-      flex: 1; padding: 6px; border: none; background: transparent; color: #94a3b8; font-size: 11px;
+      flex: 1; padding: 6px; border: none; background: transparent; color: #64748b; font-size: 11px;
       font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;
     }
-    .persona-btn.active { background: #0284c7; color: white; }
+    .persona-btn.active { background: #0284c7; color: #ffffff; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35); }
 
-    .metric-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1e293b; font-size: 12px; }
-    .metric-label { color: #94a3b8; }
-    .metric-val { font-weight: 700; color: #f8fafc; font-family: monospace; }
+    /* Metrics */
+    .metric-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+    .metric-label { color: #64748b; font-weight: 500; }
+    .metric-val { font-weight: 700; color: #0f172a; font-family: monospace; }
     
+    /* High-Visibility Status Banners */
     .clamp-alert {
       padding: 9px; border-radius: 6px; margin-top: 8px; text-align: center; font-weight: 800; font-size: 12px;
-      background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; transition: all 0.2s;
+      background: rgba(16, 185, 129, 0.15); color: #065f46; border: 1px solid #34d399; transition: all 0.2s;
     }
     .clamp-alert.active {
-      background: rgba(239, 68, 68, 0.3); color: #fca5a5; border-color: #ef4444; animation: pulse 0.8s infinite;
+      background: rgba(239, 68, 68, 0.18); color: #991b1b; border-color: #ef4444; animation: pulse 0.8s infinite;
     }
     .clamp-alert.watchdog {
-      background: rgba(217, 119, 6, 0.3); color: #fde68a; border-color: #d97706;
+      background: rgba(245, 158, 11, 0.2); color: #92400e; border-color: #f59e0b;
     }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
 
+    /* Sliders & Controls */
     .slider-container { margin-top: 6px; }
-    .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
-    input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+    .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #475569; margin-bottom: 4px; font-weight: 600; }
+    input[type=range] { width: 100%; accent-color: #0284c7; cursor: pointer; }
 
     button.action {
-      background: #0284c7; color: white; border: none; padding: 9px 14px; border-radius: 6px;
+      background: #0284c7; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px;
       font-weight: 700; font-size: 11px; cursor: pointer; transition: background 0.2s; width: 48%;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
     }
     button.action:hover { background: #0369a1; }
-    button.action.hazard { background: #dc2626; }
+    button.action.hazard { background: #dc2626; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25); }
     button.action.hazard:hover { background: #b91c1c; }
     .btn-row { display: flex; justify-content: space-between; margin-top: 10px; }
 
+    /* RocksDB Replay Panel */
     .replay-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .replay-badge {
-      background: #334155; color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+      background: #e2e8f0; color: #0369a1; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
     }
     .incident-select {
-      background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 5px; font-size: 11px; width: 60%;
+      background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px; font-size: 11px; width: 60%;
     }
   </style>
 </head>
@@ -95,7 +104,6 @@
       <span class="badge badge-watchdog" id="watchdog-badge">WATCHDOG: ARMED</span>
     </div>
 
-    <!-- 3-Way Persona Switcher -->
     <div class="persona-toggle">
       <button class="persona-btn active" id="btn-arm" onclick="setPersona('ARM')">7-DOF Arm</button>
       <button class="persona-btn" id="btn-car" onclick="setPersona('CAR')">Cybercab / AV</button>
@@ -124,7 +132,7 @@
     <div class="slider-container">
       <div class="slider-header">
         <span id="lbl-slider-margin">Obstacle Bubble Margin:</span>
-        <span id="slider-margin-val" style="color: #38bdf8; font-weight:700;">0.08 m</span>
+        <span id="slider-margin-val" style="color: #0284c7; font-weight:700;">0.08 m</span>
       </div>
       <input type="range" id="input-margin" min="0.02" max="0.25" step="0.01" value="0.08" oninput="onTuningChange()">
     </div>
@@ -132,7 +140,7 @@
     <div class="slider-container" style="margin-top: 10px;">
       <div class="slider-header">
         <span>Barrier Stiffness (Gamma):</span>
-        <span id="slider-gamma-val" style="color: #38bdf8; font-weight:700;">15.0</span>
+        <span id="slider-gamma-val" style="color: #0284c7; font-weight:700;">15.0</span>
       </div>
       <input type="range" id="input-gamma" min="5.0" max="40.0" step="1.0" value="15.0" oninput="onTuningChange()">
     </div>
@@ -141,7 +149,7 @@
   <!-- Bottom Left Stress Test Controls -->
   <div class="hud-panel" id="control-panel">
     <div class="subtitle" style="margin-bottom: 4px;">PHYSICAL INVARIANT STRESS TEST</div>
-    <p style="font-size: 11px; color: #94a3b8; line-height: 14px;" id="lbl-scenario-desc">
+    <p style="font-size: 11px; color: #64748b; line-height: 14px;" id="lbl-scenario-desc">
       Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone to observe real-time CBF active-set clamping.
     </p>
     <div class="btn-row">
@@ -176,10 +184,10 @@
     let currentPersona = 'ARM';
     let currentMargin = 0.08;
 
-    // 1. Scene & Render Setup
+    // 1. Daylight Three.js Scene Setup
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b0f19);
+    scene.background = new THREE.Color(0xf1f5f9); // Clean studio daylight background
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(2.4, 2.0, 2.6);
@@ -193,12 +201,18 @@
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
-    dirLight.position.set(5, 10, 7);
-    scene.add(dirLight);
+    // Daylight Illumination: Ambient + Sunlight + Studio Fill
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    sunLight.position.set(6, 12, 8);
+    scene.add(sunLight);
 
-    const grid = new THREE.GridHelper(8, 40, 0x334155, 0x1e293b);
+    const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.35);
+    fillLight.position.set(-6, 4, -4);
+    scene.add(fillLight);
+
+    // Daylight Floor Grid (High-contrast slate on soft light-grey)
+    const grid = new THREE.GridHelper(8, 40, 0x94a3b8, 0xcbd5e1);
     scene.add(grid);
 
     // =========================================================================
@@ -216,14 +230,14 @@
       else jointGroup.position.set(0, linkLengths[i - 1], 0);
 
       const geom = new THREE.CylinderGeometry(0.045, 0.055, linkLengths[i], 16);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3, metalness: 0.8 });
+      const mat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.25, metalness: 0.6 });
       const linkMesh = new THREE.Mesh(geom, mat);
       linkMesh.position.set(0, linkLengths[i] / 2, 0);
       jointGroup.add(linkMesh);
 
       const pivotMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.065, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 })
+        new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4, metalness: 0.8 })
       );
       jointGroup.add(pivotMesh);
 
@@ -240,29 +254,29 @@
     const carGroup = new THREE.Group();
     carGroup.visible = false;
 
-    // Futuristic Wedge Body
+    // High-Contrast Graphite / Carbon Chassis
     const carBodyGeom = new THREE.BoxGeometry(0.9, 0.3, 1.8);
-    const carBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.2 });
+    const carBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
     const carBody = new THREE.Mesh(carBodyGeom, carBodyMat);
     carBody.position.y = 0.25;
     carGroup.add(carBody);
 
-    // Aerodynamic Cabin / Glass Canopy
+    // Tinted Glass Canopy
     const cabinGeom = new THREE.ConeGeometry(0.48, 0.55, 4);
-    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.6, metalness: 0.9, roughness: 0.1 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.65, roughness: 0.1 });
     const cabin = new THREE.Mesh(cabinGeom, cabinMat);
     cabin.rotation.y = Math.PI / 4;
     cabin.position.set(0, 0.50, -0.05);
     carGroup.add(cabin);
 
-    // Glowing Cyan Headlight Strip
+    // Daylight Headlight Strip
     const lightBarGeom = new THREE.BoxGeometry(0.82, 0.04, 0.05);
-    const lightBarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const lightBarMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
     const lightBar = new THREE.Mesh(lightBarGeom, lightBarMat);
     lightBar.position.set(0, 0.25, 0.91);
     carGroup.add(lightBar);
 
-    // Roof LiDAR Pod (Spins continuously)
+    // Spinning LiDAR Puck
     const lidarPod = new THREE.Group();
     lidarPod.position.set(0, 0.72, -0.05);
     const lidarCyl = new THREE.Mesh(
@@ -272,7 +286,7 @@
     lidarPod.add(lidarCyl);
     const lidarSensor = new THREE.Mesh(
       new THREE.BoxGeometry(0.12, 0.03, 0.03),
-      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+      new THREE.MeshBasicMaterial({ color: 0x0284c7 })
     );
     lidarPod.add(lidarSensor);
     carGroup.add(lidarPod);
@@ -281,7 +295,6 @@
     const wheelGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.10, 16);
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
 
-    // Front Steering Knuckles (pivot on Y axis)
     const frontLeftKnuckle = new THREE.Group();
     frontLeftKnuckle.position.set(0.50, 0.16, 0.60);
     const frontLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
@@ -296,7 +309,6 @@
     frontRightKnuckle.add(frontRightWheel);
     carGroup.add(frontRightKnuckle);
 
-    // Rear Wheels (Fixed)
     const rearLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
     rearLeftWheel.rotation.z = Math.PI / 2;
     rearLeftWheel.position.set(0.50, 0.16, -0.60);
@@ -316,20 +328,17 @@
     droneGroup.visible = false;
     droneGroup.position.set(0, 1.2, 0);
 
-    // Central Avionics Fuselage
     const droneBodyGeom = new THREE.BoxGeometry(0.35, 0.12, 0.35);
     const droneBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.3 });
     const droneBody = new THREE.Mesh(droneBodyGeom, droneBodyMat);
     droneGroup.add(droneBody);
 
-    // Suspended Delivery Package Crate
     const packageGeom = new THREE.BoxGeometry(0.24, 0.20, 0.24);
-    const packageMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 });
+    const packageMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
     const packageMesh = new THREE.Mesh(packageGeom, packageMat);
     packageMesh.position.set(0, -0.20, 0);
     droneGroup.add(packageMesh);
 
-    // 4 Diagonal Carbon Booms & Spinning Propellers
     const rotorBlades = [];
     const boomAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
     boomAngles.forEach((angle) => {
@@ -349,9 +358,8 @@
       motorMount.position.set(Math.cos(angle) * dist, 0.04, Math.sin(angle) * dist);
       droneGroup.add(motorMount);
 
-      // Spinning Rotor Propeller
       const bladeGeom = new THREE.BoxGeometry(0.32, 0.005, 0.025);
-      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 });
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.85 });
       const blade = new THREE.Mesh(bladeGeom, bladeMat);
       blade.position.set(Math.cos(angle) * dist, 0.09, Math.sin(angle) * dist);
       droneGroup.add(blade);
@@ -361,17 +369,17 @@
     scene.add(droneGroup);
 
     // =========================================================================
-    // Dynamic Obstacle & CBF Wireframe Bubble
+    // Dynamic Obstacle & High-Visibility CBF Wireframe Bubble
     // =========================================================================
     const obsMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.08, 32, 32),
-      new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5 })
+      new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.3 })
     );
     scene.add(obsMesh);
 
     let bubbleMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.16, 32, 32),
-      new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
+      new THREE.MeshBasicMaterial({ color: 0xdc2626, wireframe: true, transparent: true, opacity: 0.45 })
     );
     scene.add(bubbleMesh);
 
@@ -388,7 +396,7 @@
     updateObstaclePosition('ARM');
 
     // =========================================================================
-    // WebSocket Telemetry Ingestion
+    // WebSocket Telemetry Ingestion & Real-Time Stress Color Mapping
     // =========================================================================
     const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
     ws.onmessage = (event) => {
@@ -400,18 +408,17 @@
           if (i % 2 === 0) joints[i].rotation.y = data.positions[i];
           else joints[i].rotation.z = data.positions[i];
 
+          // Daylight FNO Stress Map: Cyan (0.55) -> Amber (0.12) -> Crimson (0.0)
           const stressRatio = Math.min(data.stresses[i] / 80.0, 1.0);
-          links[i].material.color.setHSL(0.6 - (stressRatio * 0.6), 0.9, 0.5);
+          links[i].material.color.setHSL(0.55 - (stressRatio * 0.55), 0.9, 0.45);
         }
       } else if (currentPersona === 'CAR') {
-        // Map Joint 5 torque/position to Cybercab steering angle & chassis roll
         const steerAngle = (data.positions[5] - 2.80) * 1.5;
         frontLeftKnuckle.rotation.y = steerAngle;
         frontRightKnuckle.rotation.y = steerAngle;
         carGroup.rotation.y = steerAngle * 0.2;
         carGroup.position.x = -steerAngle * 0.3;
       } else if (currentPersona === 'DRONE') {
-        // Map Joint 4/5 to Drone Pitch and Roll
         droneGroup.rotation.z = (data.positions[5] - 2.80) * 0.6;
         droneGroup.rotation.x = data.positions[4] * 0.3;
         droneGroup.position.y = 1.2 + (data.torques[5] * 0.005);
@@ -439,7 +446,7 @@
     };
 
     // =========================================================================
-    // Persona Switcher Functionality
+    // Persona Switcher
     // =========================================================================
     function setPersona(persona) {
       currentPersona = persona;
@@ -447,7 +454,6 @@
       document.getElementById('btn-car').className = `persona-btn ${persona === 'CAR' ? 'active' : ''}`;
       document.getElementById('btn-drone').className = `persona-btn ${persona === 'DRONE' ? 'active' : ''}`;
 
-      // Model Visibility Toggle
       armGroup.visible = (persona === 'ARM');
       carGroup.visible = (persona === 'CAR');
       droneGroup.visible = (persona === 'DRONE');
@@ -506,6 +512,8 @@
 
       if (incidents.length > 0) {
         document.getElementById('replay-status').innerText = `SYNCD (${incidents.length} EVENTS)`;
+        document.getElementById('replay-status').style.background = "#e2e8f0";
+        document.getElementById('replay-status').style.color = "#0369a1";
       }
     }
 
@@ -514,7 +522,8 @@
       if (idx === "") return;
       isLive = false;
       document.getElementById('replay-status').innerText = "PAUSED (REPLAY MODE)";
-      document.getElementById('replay-status').style.background = "#d97706";
+      document.getElementById('replay-status').style.background = "#fed7aa";
+      document.getElementById('replay-status').style.color = "#9a3412";
 
       const inc = incidents[idx];
       if (currentPersona === 'ARM') {
@@ -537,7 +546,8 @@
     function resumeLive() {
       isLive = true;
       document.getElementById('replay-status').innerText = "LIVE STREAMING";
-      document.getElementById('replay-status').style.background = "#334155";
+      document.getElementById('replay-status').style.background = "#e2e8f0";
+      document.getElementById('replay-status').style.color = "#0369a1";
       document.getElementById('incident-dropdown').value = "";
     }
 
@@ -562,7 +572,7 @@
       scene.remove(bubbleMesh);
       bubbleMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.08 + margin, 32, 32),
-        new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
+        new THREE.MeshBasicMaterial({ color: 0xdc2626, wireframe: true, transparent: true, opacity: 0.45 })
       );
       bubbleMesh.position.copy(obsMesh.position);
       scene.add(bubbleMesh);
@@ -583,10 +593,8 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Continuous Cybercab LiDAR pod rotation
+      // LiDAR Puck & Drone Propeller Continuous Motion
       lidarPod.rotation.y += 0.08;
-
-      // Continuous Drone Rotor Blade rotation
       rotorBlades.forEach((b, idx) => {
         b.rotation.y += (idx % 2 === 0 ? 0.45 : -0.45);
       });
