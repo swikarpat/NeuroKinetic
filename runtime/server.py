@@ -7,10 +7,11 @@ if str(ROOT_DIR) not in sys.path:
 
 import asyncio
 import json
+import subprocess
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from runtime.shm_client import NeuroKineticClient, DOF
@@ -74,6 +75,19 @@ async def websocket_telemetry(websocket: WebSocket):
     except (WebSocketDisconnect, Exception):
         if websocket in active_connections:
             active_connections.remove(websocket)
+
+@app.get("/api/v1/incidents")
+async def get_rocksdb_incidents():
+    """Extracts recent intervention audit logs directly from RocksDB NVMe store."""
+    reader_path = ROOT_DIR / "build" / "read_incidents"
+    if not reader_path.exists():
+        return JSONResponse([])
+    try:
+        proc = subprocess.run([str(reader_path)], capture_output=True, text=True, timeout=2.0)
+        data = json.loads(proc.stdout)
+        return JSONResponse(data)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.post("/api/v1/tuning/barrier")
 async def update_barrier_tuning(tuning: TuningRequest):
