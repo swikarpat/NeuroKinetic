@@ -17,8 +17,12 @@
     }
     #header-panel { top: 20px; left: 20px; width: 440px; }
     #telemetry-panel { top: 20px; right: 20px; width: 380px; }
-    #tuning-panel { bottom: 20px; right: 20px; width: 380px; }
+    #tuning-panel { top: 320px; right: 20px; width: 380px; }
     #control-panel { bottom: 20px; left: 20px; width: 440px; }
+    #replay-panel {
+      bottom: 20px; left: 480px; right: 420px; height: 130px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
 
     h1 { font-size: 17px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; margin-bottom: 4px; }
     .subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
@@ -56,7 +60,7 @@
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-    .slider-container { margin-top: 8px; }
+    .slider-container { margin-top: 6px; }
     .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
     input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
 
@@ -68,11 +72,21 @@
     button.action.hazard { background: #dc2626; }
     button.action.hazard:hover { background: #b91c1c; }
     .btn-row { display: flex; justify-content: space-between; margin-top: 10px; }
+
+    /* Incident Replay Scrubber Styling */
+    .replay-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .replay-badge {
+      background: #334155; color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+    }
+    .incident-select {
+      background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 5px; font-size: 11px; width: 60%;
+    }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
+  <!-- Top Left Header -->
   <div class="hud-panel" id="header-panel">
     <h1>NEUROKINETIC PHYSICAL AI</h1>
     <div class="subtitle">Multi-Domain Deterministic Safety &amp; FNO Digital Twin</div>
@@ -82,7 +96,6 @@
       <span class="badge badge-watchdog" id="watchdog-badge">WATCHDOG: ARMED</span>
     </div>
 
-    <!-- Domain Persona Switcher -->
     <div class="persona-toggle">
       <button class="persona-btn active" id="btn-arm" onclick="setPersona('ARM')">7-DOF Arm</button>
       <button class="persona-btn" id="btn-car" onclick="setPersona('CAR')">Cybercab / AV</button>
@@ -92,7 +105,7 @@
     <div class="clamp-alert" id="clamp-status">STATUS: NOMINAL / SAFE INVARIANT PRESERVED</div>
   </div>
 
-  <!-- Real-Time Dynamic Telemetry Panel -->
+  <!-- Top Right Telemetry Panel -->
   <div class="hud-panel" id="telemetry-panel">
     <div class="subtitle" style="margin-bottom: 4px;">SYSTEM TELEMETRY</div>
     <div class="metric-row"><span class="metric-label" id="lbl-tick">500 Hz Kernel Tick</span><span class="metric-val" id="val-tick">0</span></div>
@@ -104,7 +117,7 @@
     <div class="metric-row"><span class="metric-label">FNO Physics Latency</span><span class="metric-val" id="val-fno">0.00 ms</span></div>
   </div>
 
-  <!-- Interactive Control Barrier Tuning Sliders -->
+  <!-- Mid Right Tuning Panel -->
   <div class="hud-panel" id="tuning-panel">
     <div class="subtitle" style="margin-bottom: 4px;">ACTIVE CBF CONSTRAINT TUNING</div>
     
@@ -125,11 +138,11 @@
     </div>
   </div>
 
-  <!-- Interactive Stress Test Panel -->
+  <!-- Bottom Left Stress Test Controls -->
   <div class="hud-panel" id="control-panel">
     <div class="subtitle" style="margin-bottom: 4px;">PHYSICAL INVARIANT STRESS TEST</div>
     <p style="font-size: 11px; color: #94a3b8; line-height: 14px;" id="lbl-scenario-desc">
-      Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone to observe real-time CBF active-set clamping.
+      Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone.
     </p>
     <div class="btn-row">
       <button class="action hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
@@ -137,7 +150,29 @@
     </div>
   </div>
 
+  <!-- Bottom Center RocksDB Flight Recorder Time-Travel Scrubber -->
+  <div class="hud-panel" id="replay-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span class="subtitle" style="margin: 0;">ROCKSDB TIME-TRAVEL BLACK-BOX (cf_cbf_interventions)</span>
+      <span class="replay-badge" id="replay-status">LIVE STREAMING</span>
+    </div>
+    
+    <div class="replay-controls">
+      <button class="action" style="width: 25%; padding: 6px;" onclick="fetchIncidents()">SYNC ROCKSDB</button>
+      <select class="incident-select" id="incident-dropdown" onchange="onSelectIncident()">
+        <option value="">-- Select Recorded Incident --</option>
+      </select>
+      <button class="action" style="width: 20%; padding: 6px;" onclick="resumeLive()">RESUME LIVE</button>
+    </div>
+
+    <div class="slider-container">
+      <input type="range" id="replay-scrubber" min="0" max="100" value="100" oninput="onScrub(this.value)">
+    </div>
+  </div>
+
   <script>
+    let isLive = true;
+    let incidents = [];
     let currentPersona = 'ARM';
 
     const container = document.getElementById('canvas-container');
@@ -211,9 +246,10 @@
     bubbleMesh.position.copy(obsPos);
     scene.add(bubbleMesh);
 
-    // WebSocket Telemetry Ingestion
+    // WebSocket Telemetry
     const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
     ws.onmessage = (event) => {
+      if (!isLive) return; // Paused for RocksDB replay
       const data = JSON.parse(event.data);
 
       for (let i = 0; i < 7; i++) {
@@ -245,6 +281,60 @@
       }
     };
 
+    // RocksDB Incident Replay Functions
+    async function fetchIncidents() {
+      const res = await fetch('/api/v1/incidents');
+      incidents = await res.json();
+      const dropdown = document.getElementById('incident-dropdown');
+      dropdown.innerHTML = '<option value="">-- Select Recorded Incident --</option>';
+      
+      incidents.forEach((inc, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = `Tick ${inc.sequence} | Cmd: ${inc.commanded_torque.toFixed(1)} Nm -> Safe: ${inc.safe_torque.toFixed(2)} Nm`;
+        dropdown.appendChild(opt);
+      });
+
+      if (incidents.length > 0) {
+        document.getElementById('replay-status').innerText = `SYNCD (${incidents.length} EVENTS)`;
+      }
+    }
+
+    function onSelectIncident() {
+      const idx = document.getElementById('incident-dropdown').value;
+      if (idx === "") return;
+      isLive = false;
+      document.getElementById('replay-status').innerText = "PAUSED (REPLAY MODE)";
+      document.getElementById('replay-status').style.background = "#d97706";
+
+      const inc = incidents[idx];
+      // Freeze kinematic rendering on Joint 5 based on incident torque ratio
+      joints[5].rotation.z = 2.893;
+      links[5].material.color.setHex(0xdc2626); // Alert red
+
+      document.getElementById('val-tick').innerText = inc.sequence.toLocaleString();
+      document.getElementById('val-kinematic').innerText = `${inc.safe_torque.toFixed(2)} Nm`;
+      document.getElementById('val-margin').innerText = `${inc.barrier_margin.toFixed(3)} m`;
+      
+      const clampEl = document.getElementById('clamp-status');
+      clampEl.innerText = `REPLAY: CBF CLAMPED COMMAND ${inc.commanded_torque.toFixed(1)} Nm TO ${inc.safe_torque.toFixed(2)} Nm`;
+      clampEl.className = "clamp-alert active";
+    }
+
+    function resumeLive() {
+      isLive = true;
+      document.getElementById('replay-status').innerText = "LIVE STREAMING";
+      document.getElementById('replay-status').style.background = "#334155";
+      document.getElementById('incident-dropdown').value = "";
+    }
+
+    function onScrub(val) {
+      if (incidents.length === 0) return;
+      const idx = Math.floor((val / 100) * (incidents.length - 1));
+      document.getElementById('incident-dropdown').value = idx;
+      onSelectIncident();
+    }
+
     function onTuningChange() {
       const margin = parseFloat(document.getElementById('input-margin').value);
       const gamma = parseFloat(document.getElementById('input-gamma').value);
@@ -252,7 +342,6 @@
       document.getElementById('slider-margin-val').innerText = `${margin.toFixed(2)} m`;
       document.getElementById('slider-gamma-val').innerText = `${gamma.toFixed(1)}`;
 
-      // Resize visual wireframe barrier bubble dynamically
       scene.remove(bubbleMesh);
       bubbleMesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.08 + margin, 32, 32),
