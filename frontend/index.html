@@ -73,7 +73,6 @@
     button.action.hazard:hover { background: #b91c1c; }
     .btn-row { display: flex; justify-content: space-between; margin-top: 10px; }
 
-    /* Incident Replay Scrubber Styling */
     .replay-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .replay-badge {
       background: #334155; color: #38bdf8; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
@@ -86,7 +85,7 @@
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Top Left Header -->
+  <!-- Top Left Header & Persona Selector -->
   <div class="hud-panel" id="header-panel">
     <h1>NEUROKINETIC PHYSICAL AI</h1>
     <div class="subtitle">Multi-Domain Deterministic Safety &amp; FNO Digital Twin</div>
@@ -96,6 +95,7 @@
       <span class="badge badge-watchdog" id="watchdog-badge">WATCHDOG: ARMED</span>
     </div>
 
+    <!-- 3-Way Persona Switcher -->
     <div class="persona-toggle">
       <button class="persona-btn active" id="btn-arm" onclick="setPersona('ARM')">7-DOF Arm</button>
       <button class="persona-btn" id="btn-car" onclick="setPersona('CAR')">Cybercab / AV</button>
@@ -123,7 +123,7 @@
     
     <div class="slider-container">
       <div class="slider-header">
-        <span>Obstacle Bubble Margin:</span>
+        <span id="lbl-slider-margin">Obstacle Bubble Margin:</span>
         <span id="slider-margin-val" style="color: #38bdf8; font-weight:700;">0.08 m</span>
       </div>
       <input type="range" id="input-margin" min="0.02" max="0.25" step="0.01" value="0.08" oninput="onTuningChange()">
@@ -142,10 +142,10 @@
   <div class="hud-panel" id="control-panel">
     <div class="subtitle" style="margin-bottom: 4px;">PHYSICAL INVARIANT STRESS TEST</div>
     <p style="font-size: 11px; color: #94a3b8; line-height: 14px;" id="lbl-scenario-desc">
-      Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone.
+      Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone to observe real-time CBF active-set clamping.
     </p>
     <div class="btn-row">
-      <button class="action hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
+      <button class="action hazard" id="btn-hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
       <button class="action" onclick="triggerReset()">HOLD / ZERO TORQUE</button>
     </div>
   </div>
@@ -174,7 +174,9 @@
     let isLive = true;
     let incidents = [];
     let currentPersona = 'ARM';
+    let currentMargin = 0.08;
 
+    // 1. Scene & Render Setup
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b0f19);
@@ -191,15 +193,17 @@
     controls.target.set(0, 0.6, 0);
     controls.update();
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
     const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
-    const grid = new THREE.GridHelper(6, 30, 0x334155, 0x1e293b);
+    const grid = new THREE.GridHelper(8, 40, 0x334155, 0x1e293b);
     scene.add(grid);
 
-    // 7-DOF Robotic Arm Model
+    // =========================================================================
+    // MODEL 1: 7-DOF Robotic Arm Group
+    // =========================================================================
     const armGroup = new THREE.Group();
     const joints = [];
     const links = [];
@@ -230,34 +234,187 @@
     }
     scene.add(armGroup);
 
-    // Obstacle & Barrier Wireframe Bubble
-    const obsPos = new THREE.Vector3(0.50, 0.45, 0.30);
+    // =========================================================================
+    // MODEL 2: Cybercab / Autonomous Vehicle Group
+    // =========================================================================
+    const carGroup = new THREE.Group();
+    carGroup.visible = false;
+
+    // Futuristic Wedge Body
+    const carBodyGeom = new THREE.BoxGeometry(0.9, 0.3, 1.8);
+    const carBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.2 });
+    const carBody = new THREE.Mesh(carBodyGeom, carBodyMat);
+    carBody.position.y = 0.25;
+    carGroup.add(carBody);
+
+    // Aerodynamic Cabin / Glass Canopy
+    const cabinGeom = new THREE.ConeGeometry(0.48, 0.55, 4);
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.6, metalness: 0.9, roughness: 0.1 });
+    const cabin = new THREE.Mesh(cabinGeom, cabinMat);
+    cabin.rotation.y = Math.PI / 4;
+    cabin.position.set(0, 0.50, -0.05);
+    carGroup.add(cabin);
+
+    // Glowing Cyan Headlight Strip
+    const lightBarGeom = new THREE.BoxGeometry(0.82, 0.04, 0.05);
+    const lightBarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const lightBar = new THREE.Mesh(lightBarGeom, lightBarMat);
+    lightBar.position.set(0, 0.25, 0.91);
+    carGroup.add(lightBar);
+
+    // Roof LiDAR Pod (Spins continuously)
+    const lidarPod = new THREE.Group();
+    lidarPod.position.set(0, 0.72, -0.05);
+    const lidarCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.08, 16),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 })
+    );
+    lidarPod.add(lidarCyl);
+    const lidarSensor = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.03, 0.03),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    lidarPod.add(lidarSensor);
+    carGroup.add(lidarPod);
+
+    // Wheels & Steering Knuckles
+    const wheelGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.10, 16);
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+
+    // Front Steering Knuckles (pivot on Y axis)
+    const frontLeftKnuckle = new THREE.Group();
+    frontLeftKnuckle.position.set(0.50, 0.16, 0.60);
+    const frontLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
+    frontLeftWheel.rotation.z = Math.PI / 2;
+    frontLeftKnuckle.add(frontLeftWheel);
+    carGroup.add(frontLeftKnuckle);
+
+    const frontRightKnuckle = new THREE.Group();
+    frontRightKnuckle.position.set(-0.50, 0.16, 0.60);
+    const frontRightWheel = new THREE.Mesh(wheelGeom, wheelMat);
+    frontRightWheel.rotation.z = Math.PI / 2;
+    frontRightKnuckle.add(frontRightWheel);
+    carGroup.add(frontRightKnuckle);
+
+    // Rear Wheels (Fixed)
+    const rearLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
+    rearLeftWheel.rotation.z = Math.PI / 2;
+    rearLeftWheel.position.set(0.50, 0.16, -0.60);
+    carGroup.add(rearLeftWheel);
+
+    const rearRightWheel = new THREE.Mesh(wheelGeom, wheelMat);
+    rearRightWheel.rotation.z = Math.PI / 2;
+    rearRightWheel.position.set(-0.50, 0.16, -0.60);
+    carGroup.add(rearRightWheel);
+
+    scene.add(carGroup);
+
+    // =========================================================================
+    // MODEL 3: Delivery Drone Group
+    // =========================================================================
+    const droneGroup = new THREE.Group();
+    droneGroup.visible = false;
+    droneGroup.position.set(0, 1.2, 0);
+
+    // Central Avionics Fuselage
+    const droneBodyGeom = new THREE.BoxGeometry(0.35, 0.12, 0.35);
+    const droneBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.3 });
+    const droneBody = new THREE.Mesh(droneBodyGeom, droneBodyMat);
+    droneGroup.add(droneBody);
+
+    // Suspended Delivery Package Crate
+    const packageGeom = new THREE.BoxGeometry(0.24, 0.20, 0.24);
+    const packageMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 });
+    const packageMesh = new THREE.Mesh(packageGeom, packageMat);
+    packageMesh.position.set(0, -0.20, 0);
+    droneGroup.add(packageMesh);
+
+    // 4 Diagonal Carbon Booms & Spinning Propellers
+    const rotorBlades = [];
+    const boomAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+    boomAngles.forEach((angle) => {
+      const boom = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.65, 8),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 })
+      );
+      boom.rotation.z = Math.PI / 2;
+      boom.rotation.y = angle;
+      droneGroup.add(boom);
+
+      const motorMount = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.08, 12),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a })
+      );
+      const dist = 0.38;
+      motorMount.position.set(Math.cos(angle) * dist, 0.04, Math.sin(angle) * dist);
+      droneGroup.add(motorMount);
+
+      // Spinning Rotor Propeller
+      const bladeGeom = new THREE.BoxGeometry(0.32, 0.005, 0.025);
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 });
+      const blade = new THREE.Mesh(bladeGeom, bladeMat);
+      blade.position.set(Math.cos(angle) * dist, 0.09, Math.sin(angle) * dist);
+      droneGroup.add(blade);
+      rotorBlades.push(blade);
+    });
+
+    scene.add(droneGroup);
+
+    // =========================================================================
+    // Dynamic Obstacle & CBF Wireframe Bubble
+    // =========================================================================
     const obsMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.08, 32, 32),
       new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5 })
     );
-    obsMesh.position.copy(obsPos);
     scene.add(obsMesh);
 
     let bubbleMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.16, 32, 32),
       new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
     );
-    bubbleMesh.position.copy(obsPos);
     scene.add(bubbleMesh);
 
-    // WebSocket Telemetry
+    function updateObstaclePosition(persona) {
+      if (persona === 'CAR') {
+        obsMesh.position.set(0.0, 0.20, 1.8);
+      } else if (persona === 'DRONE') {
+        obsMesh.position.set(0.7, 1.25, 0.7);
+      } else {
+        obsMesh.position.set(0.50, 0.45, 0.30);
+      }
+      bubbleMesh.position.copy(obsMesh.position);
+    }
+    updateObstaclePosition('ARM');
+
+    // =========================================================================
+    // WebSocket Telemetry Ingestion
+    // =========================================================================
     const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
     ws.onmessage = (event) => {
-      if (!isLive) return; // Paused for RocksDB replay
+      if (!isLive) return;
       const data = JSON.parse(event.data);
 
-      for (let i = 0; i < 7; i++) {
-        if (i % 2 === 0) joints[i].rotation.y = data.positions[i];
-        else joints[i].rotation.z = data.positions[i];
+      if (currentPersona === 'ARM') {
+        for (let i = 0; i < 7; i++) {
+          if (i % 2 === 0) joints[i].rotation.y = data.positions[i];
+          else joints[i].rotation.z = data.positions[i];
 
-        const stressRatio = Math.min(data.stresses[i] / 80.0, 1.0);
-        links[i].material.color.setHSL(0.6 - (stressRatio * 0.6), 0.9, 0.5);
+          const stressRatio = Math.min(data.stresses[i] / 80.0, 1.0);
+          links[i].material.color.setHSL(0.6 - (stressRatio * 0.6), 0.9, 0.5);
+        }
+      } else if (currentPersona === 'CAR') {
+        // Map Joint 5 torque/position to Cybercab steering angle & chassis roll
+        const steerAngle = (data.positions[5] - 2.80) * 1.5;
+        frontLeftKnuckle.rotation.y = steerAngle;
+        frontRightKnuckle.rotation.y = steerAngle;
+        carGroup.rotation.y = steerAngle * 0.2;
+        carGroup.position.x = -steerAngle * 0.3;
+      } else if (currentPersona === 'DRONE') {
+        // Map Joint 4/5 to Drone Pitch and Roll
+        droneGroup.rotation.z = (data.positions[5] - 2.80) * 0.6;
+        droneGroup.rotation.x = data.positions[4] * 0.3;
+        droneGroup.position.y = 1.2 + (data.torques[5] * 0.005);
       }
 
       document.getElementById('val-tick').innerText = data.sequence.toLocaleString();
@@ -281,7 +438,59 @@
       }
     };
 
-    // RocksDB Incident Replay Functions
+    // =========================================================================
+    // Persona Switcher Functionality
+    // =========================================================================
+    function setPersona(persona) {
+      currentPersona = persona;
+      document.getElementById('btn-arm').className = `persona-btn ${persona === 'ARM' ? 'active' : ''}`;
+      document.getElementById('btn-car').className = `persona-btn ${persona === 'CAR' ? 'active' : ''}`;
+      document.getElementById('btn-drone').className = `persona-btn ${persona === 'DRONE' ? 'active' : ''}`;
+
+      // Model Visibility Toggle
+      armGroup.visible = (persona === 'ARM');
+      carGroup.visible = (persona === 'CAR');
+      droneGroup.visible = (persona === 'DRONE');
+
+      updateObstaclePosition(persona);
+
+      if (persona === 'CAR') {
+        camera.position.set(0.0, 1.8, 3.2);
+        controls.target.set(0.0, 0.4, 0.8);
+        document.getElementById('lbl-kinematic').innerText = "Steering Drive Torque";
+        document.getElementById('lbl-pos').innerText = "Front Wheel Steering Angle";
+        document.getElementById('lbl-margin').innerText = "Time-To-Collision Buffer";
+        document.getElementById('lbl-stress').innerText = "Tire Friction Circle Load";
+        document.getElementById('lbl-slider-margin').innerText = "Forward Braking Margin:";
+        document.getElementById('lbl-scenario-desc').innerText = "Simulate Cybercab vision occlusion: foundation model commands full throttle (+45 Nm) straight toward a stopped vehicle; C++ Drive-by-Wire CBF halts vehicle 3mm before impact.";
+        document.getElementById('btn-hazard').innerText = "DISPATCH HAZARD (BRAKE TEST)";
+      } else if (persona === 'DRONE') {
+        camera.position.set(2.2, 2.0, 2.2);
+        controls.target.set(0.0, 1.2, 0.0);
+        document.getElementById('lbl-kinematic').innerText = "Rotor Thrust Differential";
+        document.getElementById('lbl-pos').innerText = "Pitch / Roll Tilt Angle";
+        document.getElementById('lbl-margin').innerText = "3D Airspace Geofence Margin";
+        document.getElementById('lbl-stress').innerText = "Stator Coil Joule Heating";
+        document.getElementById('lbl-slider-margin').innerText = "Geofence Safe Bubble:";
+        document.getElementById('lbl-scenario-desc').innerText = "Simulate extreme wind turbulence: policy commands aggressive pitch toward an obstacle; C++ kernel overrides thrust to maintain strict 3D keep-out sphere.";
+        document.getElementById('btn-hazard').innerText = "DISPATCH HAZARD (WIND GUST)";
+      } else {
+        camera.position.set(2.4, 2.0, 2.6);
+        controls.target.set(0.0, 0.6, 0.0);
+        document.getElementById('lbl-kinematic').innerText = "Joint 5 Applied Torque";
+        document.getElementById('lbl-pos').innerText = "Joint 5 Position";
+        document.getElementById('lbl-margin').innerText = "Safety Barrier Clearance";
+        document.getElementById('lbl-stress').innerText = "Peak Structural Stress";
+        document.getElementById('lbl-slider-margin').innerText = "Obstacle Bubble Margin:";
+        document.getElementById('lbl-scenario-desc').innerText = "Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone to observe real-time CBF active-set clamping.";
+        document.getElementById('btn-hazard').innerText = "DISPATCH HAZARD (+45 Nm)";
+      }
+      controls.update();
+    }
+
+    // =========================================================================
+    // RocksDB Replay Logic
+    // =========================================================================
     async function fetchIncidents() {
       const res = await fetch('/api/v1/incidents');
       incidents = await res.json();
@@ -308,9 +517,13 @@
       document.getElementById('replay-status').style.background = "#d97706";
 
       const inc = incidents[idx];
-      // Freeze kinematic rendering on Joint 5 based on incident torque ratio
-      joints[5].rotation.z = 2.893;
-      links[5].material.color.setHex(0xdc2626); // Alert red
+      if (currentPersona === 'ARM') {
+        joints[5].rotation.z = 2.893;
+        links[5].material.color.setHex(0xdc2626);
+      } else if (currentPersona === 'CAR') {
+        frontLeftKnuckle.rotation.y = 0.45;
+        frontRightKnuckle.rotation.y = 0.45;
+      }
 
       document.getElementById('val-tick').innerText = inc.sequence.toLocaleString();
       document.getElementById('val-kinematic').innerText = `${inc.safe_torque.toFixed(2)} Nm`;
@@ -335,9 +548,13 @@
       onSelectIncident();
     }
 
+    // =========================================================================
+    // Active Tuning Sliders
+    // =========================================================================
     function onTuningChange() {
       const margin = parseFloat(document.getElementById('input-margin').value);
       const gamma = parseFloat(document.getElementById('input-gamma').value);
+      currentMargin = margin;
 
       document.getElementById('slider-margin-val').innerText = `${margin.toFixed(2)} m`;
       document.getElementById('slider-gamma-val').innerText = `${gamma.toFixed(1)}`;
@@ -347,7 +564,7 @@
         new THREE.SphereGeometry(0.08 + margin, 32, 32),
         new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 })
       );
-      bubbleMesh.position.copy(obsPos);
+      bubbleMesh.position.copy(obsMesh.position);
       scene.add(bubbleMesh);
 
       fetch('/api/v1/tuning/barrier', {
@@ -357,38 +574,23 @@
       });
     }
 
-    function setPersona(persona) {
-      currentPersona = persona;
-      document.getElementById('btn-arm').className = `persona-btn ${persona === 'ARM' ? 'active' : ''}`;
-      document.getElementById('btn-car').className = `persona-btn ${persona === 'CAR' ? 'active' : ''}`;
-      document.getElementById('btn-drone').className = `persona-btn ${persona === 'DRONE' ? 'active' : ''}`;
-
-      if (persona === 'CAR') {
-        document.getElementById('lbl-kinematic').innerText = "Steering & Drive Torque";
-        document.getElementById('lbl-pos').innerText = "Steering Angle (rad)";
-        document.getElementById('lbl-margin').innerText = "Forward Time-To-Collision (TTC)";
-        document.getElementById('lbl-stress').innerText = "Tire Friction Circle Use";
-        document.getElementById('lbl-scenario-desc').innerText = "Simulate Cybercab vision obstruction triggering emergency Drive-by-Wire CBF braking before obstacle impact.";
-      } else if (persona === 'DRONE') {
-        document.getElementById('lbl-kinematic').innerText = "Rotor Thrust Output (N)";
-        document.getElementById('lbl-pos').innerText = "Pitch / Tilt Angle (rad)";
-        document.getElementById('lbl-margin').innerText = "3D Geofence Buffer (m)";
-        document.getElementById('lbl-stress').innerText = "Motor Coil Joule Heating";
-        document.getElementById('lbl-scenario-desc').innerText = "Simulate severe wind gust turbulence pushing the delivery drone toward a structure keep-out perimeter.";
-      } else {
-        document.getElementById('lbl-kinematic').innerText = "Joint 5 Applied Torque";
-        document.getElementById('lbl-pos').innerText = "Joint 5 Position";
-        document.getElementById('lbl-margin').innerText = "Safety Barrier Clearance";
-        document.getElementById('lbl-stress').innerText = "Peak Structural Stress";
-        document.getElementById('lbl-scenario-desc').innerText = "Inject an intentional torque spike (+45 Nm) commanding the manipulator directly into the obstacle zone.";
-      }
-    }
-
     function triggerHazard() { fetch('/api/v1/actuate/hazard', { method: 'POST' }); }
     function triggerReset() { fetch('/api/v1/actuate/reset', { method: 'POST' }); }
 
+    // =========================================================================
+    // Continuous Render Loop
+    // =========================================================================
     function animate() {
       requestAnimationFrame(animate);
+
+      // Continuous Cybercab LiDAR pod rotation
+      lidarPod.rotation.y += 0.08;
+
+      // Continuous Drone Rotor Blade rotation
+      rotorBlades.forEach((b, idx) => {
+        b.rotation.y += (idx % 2 === 0 ? 0.45 : -0.45);
+      });
+
       renderer.render(scene, camera);
     }
     animate();
