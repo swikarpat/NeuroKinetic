@@ -10,6 +10,12 @@ NeuroKinetic solves the fundamental safety challenge of Physical AI: **probabili
 
 NeuroKinetic decouples execution across three distinct temporal frequencies:
 
+
+<p align="center">
+  <img src="architecture.svg" alt="Architecture" width="100%">
+</p>
+
+
 ```
 [ Operator Natural Language Prompt ]        [ Multi-Camera RGB-D & Joint Encoders ]
                   │                                           │
