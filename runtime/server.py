@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-# Add project root to sys.path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -12,11 +11,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from runtime.shm_client import NeuroKineticClient, DOF
 from runtime.fno_surrogate import fno_twin
 
 client = None
+current_safety_margin = 0.08
+current_gamma = 15.0
+
+class TuningRequest(BaseModel):
+    safety_margin: float
+    gamma: float
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,11 +31,10 @@ async def lifespan(app: FastAPI):
         client = NeuroKineticClient()
         print("✓ Connected to C++23 Safety Daemon via POSIX SHM")
     except Exception as e:
-        print(f"[Warning] C++ Daemon not running yet: {e}")
+        print(f"[Warning] C++ Daemon not running: {e}")
     yield
 
 app = FastAPI(title="NeuroKinetic Digital Twin Gateway", lifespan=lifespan)
-
 active_connections: list[WebSocket] = []
 
 @app.websocket("/ws/telemetry")
@@ -38,7 +43,7 @@ async def websocket_telemetry(websocket: WebSocket):
     active_connections.append(websocket)
     try:
         while True:
-            await asyncio.sleep(0.02)  # 50 Hz refresh rate
+            await asyncio.sleep(0.02)  # 50 Hz
             if not client:
                 continue
 
@@ -57,32 +62,39 @@ async def websocket_telemetry(websocket: WebSocket):
                 "torques": telem["torques"],
                 "barrier_margin": round(telem["barrier_margin"], 4),
                 "clamped": telem["clamped"],
-                "error_code": telem["error_code"],
+                "watchdog_tripped": telem.get("watchdog_tripped", False),
+                "active_safety_margin": current_safety_margin,
                 "temperatures": physics["joint_temperatures_c"],
                 "stresses": physics["von_mises_stress_mpa"],
                 "max_stress": physics["max_stress_mpa"],
                 "max_temp": physics["max_temp_c"],
                 "fno_eval_ms": physics["fno_eval_time_ms"]
             }
-
             await websocket.send_text(json.dumps(payload))
     except (WebSocketDisconnect, Exception):
         if websocket in active_connections:
             active_connections.remove(websocket)
 
+@app.post("/api/v1/tuning/barrier")
+async def update_barrier_tuning(tuning: TuningRequest):
+    global current_safety_margin, current_gamma
+    current_safety_margin = float(tuning.safety_margin)
+    current_gamma = float(tuning.gamma)
+    if client:
+        client.dispatch_vla_torque([0.0]*DOF, safety_margin=current_safety_margin, gamma=current_gamma)
+    return {"status": "TUNING_APPLIED", "margin": current_safety_margin, "gamma": current_gamma}
+
 @app.post("/api/v1/actuate/hazard")
 async def trigger_hazard():
-    """Triggers an intentional +45.0 Nm spike on Joint 5 to demonstrate live CBF clamping."""
     if client:
-        client.dispatch_vla_torque([0.0, 0.0, 0.0, 0.0, 0.0, 45.0, 0.0])
+        client.dispatch_vla_torque([0.0, 0.0, 0.0, 0.0, 0.0, 45.0, 0.0], safety_margin=current_safety_margin, gamma=current_gamma)
         return {"status": "HAZARD_DISPATCHED", "joint": 5, "commanded_torque_nm": 45.0}
     return {"status": "ERROR_NO_SHM"}
 
 @app.post("/api/v1/actuate/reset")
 async def trigger_reset():
-    """Resets the arm torques back to zero."""
     if client:
-        client.dispatch_vla_torque([0.0] * DOF)
+        client.dispatch_vla_torque([0.0] * DOF, safety_margin=current_safety_margin, gamma=current_gamma)
         return {"status": "RESET_DISPATCHED"}
     return {"status": "ERROR_NO_SHM"}
 
@@ -95,20 +107,3 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("runtime.server:app", host="0.0.0.0", port=8000, reload=False, log_level="warning")
-
-# Ingress endpoint receiving orders from Java 21 Spring Boot Gateway
-from pydantic import BaseModel
-
-class WorkOrderRequest(BaseModel):
-    orderId: str
-    prompt: str
-    targetWorkcell: str | None = "CELL-1"
-    targetJoints: list[float]
-
-@app.post("/api/v1/orders/dispatch")
-async def ingest_java_order(order: WorkOrderRequest):
-    print(f"\n[Fleet Ingress from Java Gateway] Ingested: {order.orderId} -> Prompt: '{order.prompt}'")
-    # Dispatches target to 500 Hz kernel via SHM
-    if client and len(order.targetJoints) == DOF:
-        client.dispatch_vla_torque([float(x) for x in order.targetJoints])
-    return {"status": "ACCEPTED", "orderId": order.orderId}
