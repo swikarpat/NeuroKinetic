@@ -1,10 +1,18 @@
+import sys
+from pathlib import Path
+
+# Add project root to sys.path
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 import asyncio
 import json
-import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
 from runtime.shm_client import NeuroKineticClient, DOF
 from runtime.fno_surrogate import fno_twin
 
@@ -21,6 +29,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="NeuroKinetic Digital Twin Gateway", lifespan=lifespan)
+
 active_connections: list[WebSocket] = []
 
 @app.websocket("/ws/telemetry")
@@ -30,11 +39,14 @@ async def websocket_telemetry(websocket: WebSocket):
     try:
         while True:
             await asyncio.sleep(0.02)  # 50 Hz refresh rate
-            if not client: continue
+            if not client:
+                continue
 
             telem = client.read_telemetry()
             physics = fno_twin.evaluate_physics_twin(
-                telem["positions"], telem["velocities"], telem["torques"]
+                telem["positions"],
+                telem["velocities"],
+                telem["torques"]
             )
 
             payload = {
@@ -52,6 +64,7 @@ async def websocket_telemetry(websocket: WebSocket):
                 "max_temp": physics["max_temp_c"],
                 "fno_eval_ms": physics["fno_eval_time_ms"]
             }
+
             await websocket.send_text(json.dumps(payload))
     except (WebSocketDisconnect, Exception):
         if websocket in active_connections:
@@ -59,6 +72,7 @@ async def websocket_telemetry(websocket: WebSocket):
 
 @app.post("/api/v1/actuate/hazard")
 async def trigger_hazard():
+    """Triggers an intentional +45.0 Nm spike on Joint 5 to demonstrate live CBF clamping."""
     if client:
         client.dispatch_vla_torque([0.0, 0.0, 0.0, 0.0, 0.0, 45.0, 0.0])
         return {"status": "HAZARD_DISPATCHED", "joint": 5, "commanded_torque_nm": 45.0}
@@ -66,6 +80,7 @@ async def trigger_hazard():
 
 @app.post("/api/v1/actuate/reset")
 async def trigger_reset():
+    """Resets the arm torques back to zero."""
     if client:
         client.dispatch_vla_torque([0.0] * DOF)
         return {"status": "RESET_DISPATCHED"}
