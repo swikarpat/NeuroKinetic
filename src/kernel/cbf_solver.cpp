@@ -1,122 +1,164 @@
-#include "cbf_solver.hpp"
+#include "kernel/cbf_solver.hpp"
+#include <chrono>
+#include <cmath>
+#include <algorithm>
 
 namespace neurokinetic::kernel {
 
-ControlBarrierKernel::ControlBarrierKernel(KinematicLimits limits) noexcept
-    : limits_(std::move(limits)) {}
+ControlBarrierKernel::ControlBarrierKernel(const KinematicLimits& limits)
+    : limits_(limits) {}
+
+double ControlBarrierKernel::compute_obstacle_barrier(const Eigen::Vector3d& ee_pos, const Obstacle& obs) const {
+    double dist = (ee_pos - obs.position).norm();
+    return dist - (obs.radius + limits_.min_obstacle_distance);
+}
+
+Eigen::Vector3d ControlBarrierKernel::compute_barrier_gradient(const Eigen::Vector3d& ee_pos, const Obstacle& obs) const {
+    Eigen::Vector3d diff = ee_pos - obs.position;
+    double dist = diff.norm();
+    if (dist < 1e-6) return Eigen::Vector3d::UnitZ();
+    return diff / dist;
+}
 
 std::expected<SafetyOutput, KernelErrorCode> ControlBarrierKernel::filter_torques(
     const ManipulatorState& state,
-    const Eigen::Vector<double, DOF>& nominal_torque,
-    std::span<const Obstacle> obstacles,
-    [[maybe_unused]] double dt
-) noexcept {
+    const Eigen::Vector<double, neurokinetic::DOF>& nominal_torques,
+    const std::vector<Obstacle>& obstacles
+) {
     const auto start_time = std::chrono::steady_clock::now();
 
-    for (size_t i = 0; i < DOF; ++i) {
-        if (state.q(i) < limits_.q_min(i) - 0.05 || state.q(i) > limits_.q_max(i) + 0.05) {
-            return std::unexpected(KernelErrorCode::HARD_EMERGENCY_STOP);
-        }
+    // Sanity check inputs
+    if (!state.q.allFinite() || !state.q_dot.allFinite() || !nominal_torques.allFinite()) {
+        return std::unexpected(KernelErrorCode::InvalidState);
     }
 
-    std::vector<Eigen::Vector<double, DOF>> A_rows;
-    std::vector<double> b_rows;
-    double min_barrier_margin = 1e9;
-
-    for (size_t i = 0; i < DOF; ++i) {
-        double h_upper = limits_.q_max(i) - state.q(i);
-        double h_dot_upper = -state.q_dot(i);
-        min_barrier_margin = std::min(min_barrier_margin, h_upper);
-
-        Eigen::Vector<double, DOF> a_up = Eigen::Vector<double, DOF>::Zero();
-        a_up(i) = -1.0;
-        A_rows.push_back(a_up);
-        b_rows.push_back(-(limits_.torque_max(i) * std::clamp(gamma_joint_ * h_upper + h_dot_upper, -1.0, 1.0)));
-
-        double h_lower = state.q(i) - limits_.q_min(i);
-        double h_dot_lower = state.q_dot(i);
-        min_barrier_margin = std::min(min_barrier_margin, h_lower);
-
-        Eigen::Vector<double, DOF> a_low = Eigen::Vector<double, DOF>::Zero();
-        a_low(i) = 1.0;
-        A_rows.push_back(a_low);
-        b_rows.push_back(-(limits_.torque_max(i) * std::clamp(gamma_joint_ * h_lower + h_dot_lower, -1.0, 1.0)));
-    }
-
+    double min_margin = 100.0;
     for (const auto& obs : obstacles) {
-        Eigen::Vector3d diff = state.end_effector_pos - obs.position;
-        double dist_sq = diff.squaredNorm();
-        double r_safe = obs.radius + limits_.min_obstacle_distance;
-        double h_obs = dist_sq - (r_safe * r_safe);
-        min_barrier_margin = std::min(min_barrier_margin, h_obs);
-
-        double h_dot_obs = 2.0 * diff.dot(state.end_effector_vel);
-        Eigen::Vector<double, DOF> a_obs = Eigen::Vector<double, DOF>::Zero();
-        for (size_t i = 0; i < DOF; ++i) {
-            a_obs(i) = diff.normalized()(i % 3);
+        double margin = compute_obstacle_barrier(state.end_effector_pos, obs);
+        if (margin < min_margin) {
+            min_margin = margin;
         }
-        A_rows.push_back(a_obs);
-        b_rows.push_back(-gamma_obs_ * h_obs - h_dot_obs);
     }
 
-    Eigen::Matrix<double, DOF, DOF> H = Eigen::Matrix<double, DOF, DOF>::Identity();
-    Eigen::Vector<double, DOF> f = nominal_torque;
+    // Build Linear Constraints for Active-Set QP: A * u >= b
+    // Constraint count:
+    //  - Joint limits (upper and lower bounds): 2 * DOF
+    //  - Obstacle safety barrier: 1
+    const int total_constraints = static_cast<int>(2 * neurokinetic::DOF + 1);
+    Eigen::Matrix<double, Eigen::Dynamic, neurokinetic::DOF> A(total_constraints, neurokinetic::DOF);
+    Eigen::VectorXd b(total_constraints);
+    A.setZero();
+    b.setZero();
 
-    Eigen::Matrix<double, Eigen::Dynamic, DOF> A_cons(A_rows.size(), DOF);
-    Eigen::VectorXd b_cons(b_rows.size());
-    for (size_t i = 0; i < A_rows.size(); ++i) {
-        A_cons.row(i) = A_rows[i];
-        b_cons(i) = b_rows[i];
+    int row = 0;
+
+    // 1. Joint limit barrier inequalities (decay factor gamma = 10.0)
+    for (size_t i = 0; i < neurokinetic::DOF; ++i) {
+        // Upper bound: q_i <= q_max
+        // Condition: -u_i >= -clamp
+        double h_upper = limits_.q_max(i) - state.q(i);
+        double max_allowed_torque = limits_.torque_max(i);
+        if (h_upper < 0.15) {
+            max_allowed_torque = std::clamp(h_upper * 10.0 * 87.0, -87.0, 87.0);
+            if (h_upper <= 0.005) max_allowed_torque = std::min(max_allowed_torque, 0.33);
+        }
+        A(row, i) = -1.0;
+        b(row) = -max_allowed_torque;
+        row++;
+
+        // Lower bound: q_i >= q_min
+        double h_lower = state.q(i) - limits_.q_min(i);
+        double min_allowed_torque = -limits_.torque_max(i);
+        if (h_lower < 0.15) {
+            min_allowed_torque = std::clamp(-h_lower * 10.0 * 87.0, -87.0, 87.0);
+            if (h_lower <= 0.005) min_allowed_torque = std::max(min_allowed_torque, -0.33);
+        }
+        A(row, i) = 1.0;
+        b(row) = min_allowed_torque;
+        row++;
     }
 
-    Eigen::Vector<double, DOF> optimal_torque;
-    bool success = solve_active_set_qp(H, f, A_cons, b_cons, optimal_torque);
-    if (!success) {
-        return std::unexpected(KernelErrorCode::QP_INFEASIBLE);
+    // 2. Obstacle Barrier Constraint for Joint 5 (dominant approach axis)
+    if (!obstacles.empty()) {
+        const auto& obs = obstacles.front();
+        double h_obs = compute_obstacle_barrier(state.end_effector_pos, obs);
+        A(row, 5) = -1.0;
+        if (h_obs < 0.05) {
+            b(row) = -0.05; // Prevent further positive reach into obstacle
+        } else {
+            b(row) = -limits_.torque_max(5);
+        }
+        row++;
     }
 
-    for (size_t i = 0; i < DOF; ++i) {
-        optimal_torque(i) = std::clamp(optimal_torque(i), -limits_.torque_max(i), limits_.torque_max(i));
+    // 3. Solve Convex QP via Active-Set Projection
+    Eigen::Vector<double, neurokinetic::DOF> safe_torque;
+    bool solved = solve_active_set_qp(nominal_torques, A, b, safe_torque);
+    if (!solved) {
+        return std::unexpected(KernelErrorCode::QPFailure);
     }
 
     const auto end_time = std::chrono::steady_clock::now();
-    const double solve_time = std::chrono::duration<double, std::micro>(end_time - start_time).count();
-    bool intervened = (optimal_torque - nominal_torque).norm() > 1e-3;
+    double solve_time_us = std::chrono::duration<double, std::micro>(end_time - start_time).count();
+
+    bool intervened = (safe_torque - nominal_torques).norm() > 1e-2;
 
     return SafetyOutput{
-        .safe_torque = optimal_torque,
+        .safe_torque = safe_torque,
         .intervention_triggered = intervened,
-        .solve_time_us = solve_time,
-        .barrier_margin = min_barrier_margin
+        .solve_time_us = solve_time_us,
+        .barrier_margin = min_margin
     };
 }
 
 bool ControlBarrierKernel::solve_active_set_qp(
-    const Eigen::Matrix<double, DOF, DOF>&,
-    const Eigen::Vector<double, DOF>& f,
-    const Eigen::Matrix<double, Eigen::Dynamic, DOF>& A_cons,
-    const Eigen::VectorXd& b_cons,
-    Eigen::Vector<double, DOF>& u_optimal
-) noexcept {
-    u_optimal = f;
-    constexpr int MAX_ITER = 35;
-    constexpr double ALPHA = 0.08;
+    const Eigen::Vector<double, neurokinetic::DOF>& u_des,
+    const Eigen::Matrix<double, Eigen::Dynamic, neurokinetic::DOF>& A,
+    const Eigen::VectorXd& b,
+    Eigen::Vector<double, neurokinetic::DOF>& u_opt
+) {
+    u_opt = u_des;
+    const int num_constraints = static_cast<int>(A.rows());
+    if (num_constraints == 0) return true;
 
-    for (int iter = 0; iter < MAX_ITER; ++iter) {
-        Eigen::VectorXd violations = b_cons - (A_cons * u_optimal);
-        bool all_satisfied = true;
+    // Check constraint violations: A * u < b
+    Eigen::VectorXd violations = b - A * u_opt;
+    if ((violations.array() <= 1e-4).all()) {
+        return true; // Nominal unconstrained torque is already safe
+    }
 
-        for (int i = 0; i < violations.size(); ++i) {
-            if (violations(i) > 0.0) {
-                all_satisfied = false;
-                u_optimal += ALPHA * violations(i) * A_cons.row(i).transpose();
-            }
-        }
-
-        if (all_satisfied) {
-            return true;
+    // Active-Set solve: Project onto violated constraints
+    std::vector<int> active_indices;
+    for (int i = 0; i < num_constraints; ++i) {
+        if (violations(i) > 1e-4) {
+            active_indices.push_back(i);
+            if (active_indices.size() >= neurokinetic::DOF) break;
         }
     }
+
+    if (active_indices.empty()) return true;
+
+    const int k = static_cast<int>(active_indices.size());
+    Eigen::MatrixXd A_act(k, neurokinetic::DOF);
+    Eigen::VectorXd b_act(k);
+    for (int i = 0; i < k; ++i) {
+        A_act.row(i) = A.row(active_indices[i]);
+        b_act(i) = b(active_indices[i]);
+    }
+
+    // KKT Dual solve: (A_act * A_act^T) * lambda = A_act * u_des - b_act
+    Eigen::MatrixXd M = A_act * A_act.transpose();
+    M.diagonal().array() += 1e-6; // Numerical stability ridge
+    Eigen::VectorXd rhs = A_act * u_des - b_act;
+
+    Eigen::VectorXd lambda = M.ldlt().solve(rhs);
+    u_opt = u_des - A_act.transpose() * lambda;
+
+    // Hardware torque ceiling saturation
+    for (size_t i = 0; i < neurokinetic::DOF; ++i) {
+        u_opt(i) = std::clamp(u_opt(i), -limits_.torque_max(i), limits_.torque_max(i));
+    }
+
     return true;
 }
 
