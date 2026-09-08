@@ -6,56 +6,12 @@ NeuroKinetic solves the fundamental safety challenge of Physical AI: **probabili
 
 ---
 
-## 1. System Topology & Multi-Rate Hierarchical Architecture
-
-NeuroKinetic decouples execution across three distinct temporal frequencies:
-
+## 1. System Multi-Rate Hierarchical Architecture
 
 <p align="center">
   <img src="architecture.svg" alt="Architecture" width="100%">
 </p>
 
-
-```
-[ Operator Natural Language Prompt ]        [ Multi-Camera RGB-D & Joint Encoders ]
-                  │                                           │
-                  ▼                                           ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ TIER 1: Cognitive VLA & Flow-Matching Policy (2 to 5 Hz / Edge GPU)         │
-│ • Natural language task decomposition & spatial goal parsing                │
-│ • Minimum-jerk cubic Hermite action chunking (OpenVLA / π0 style)           │
-│ • Output: 6-DOF Cartesian end-effector waypoints & target joint vectors     │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ Trajectory Chunks (50 Hz setpoint density)
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ TIER 2: Surrogate Neural Physics Twin (50 Hz / Python 3.14 & NumPy Spectral)│
-│ • 1D Spectral Convolution Fourier Neural Operator (FNO)                     │
-│ • Real-time field evaluation: localized Joule heating (°C) & von Mises      │
-│   structural stress (MPa) evaluated in < 0.20 ms                            │
-│ • 4D dynamic obstacle clearance validation                                  │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ High-Rate Dynamic Setpoints
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ IPC BRIDGE: Zero-Copy POSIX Shared Memory (/tmp/neurokinetic_ipc.shm)       │
-│ • Lock-free Seqlock atomic synchronization (Even = Read Safe, Odd = Write)  │
-│ • Cache-line aligned 64-byte structs; transit latency < 6 µs                │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ Nominal Command Torques
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ TIER 3: Deterministic Hard Real-Time Safety Kernel (500 Hz / Native C++23)  │
-│ • Control Barrier Functions (CBFs) solved via Active-Set Convex QP          │
-│ • Real-time thread running 2,000 µs hard clock ticks                        │
-│ • Clamps velocity, acceleration, and torque invariants in < 2.0 µs          │
-│ • Hard emergency-stop (E-Stop) physical trip line enforcement               │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-                                       ▼
-                     [ Actuator Torques / Motor Drivers ]
-
-```
 
 ---
 
