@@ -95,3 +95,20 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("runtime.server:app", host="0.0.0.0", port=8000, reload=False, log_level="warning")
+
+# Ingress endpoint receiving orders from Java 21 Spring Boot Gateway
+from pydantic import BaseModel
+
+class WorkOrderRequest(BaseModel):
+    orderId: str
+    prompt: str
+    targetWorkcell: str | None = "CELL-1"
+    targetJoints: list[float]
+
+@app.post("/api/v1/orders/dispatch")
+async def ingest_java_order(order: WorkOrderRequest):
+    print(f"\n[Fleet Ingress from Java Gateway] Ingested: {order.orderId} -> Prompt: '{order.prompt}'")
+    # Dispatches target to 500 Hz kernel via SHM
+    if client and len(order.targetJoints) == DOF:
+        client.dispatch_vla_torque([float(x) for x in order.targetJoints])
+    return {"status": "ACCEPTED", "orderId": order.orderId}

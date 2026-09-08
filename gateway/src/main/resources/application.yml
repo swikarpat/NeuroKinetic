@@ -1,0 +1,12 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: neurokinetic-enterprise-gateway
+
+logging:
+  level:
+    com.neurokinetic.gateway: INFO
+    org.springframework.web.reactive: INFO
