@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NeuroKinetic — 3D Physical AI Digital Twin</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    body { background: #0b0f19; color: #f1f5f9; overflow: hidden; }
+    #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+    .hud-panel { position: absolute; z-index: 10; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.8); border-radius: 10px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    #header-panel { top: 20px; left: 20px; width: 420px; }
+    #telemetry-panel { top: 20px; right: 20px; width: 380px; }
+    #control-panel { bottom: 20px; left: 20px; width: 420px; }
+    h1 { font-size: 18px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 6px; letter-spacing: 0.5px; }
+    .badge-cxx { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+    .badge-fno { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .badge-cbf { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+    .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 12px; }
+    .metric-label { color: #94a3b8; }
+    .metric-val { font-weight: 700; color: #f8fafc; font-family: monospace; }
+    .clamp-alert { padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: 800; font-size: 13px; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; transition: all 0.2s; }
+    .clamp-alert.active { background: rgba(239, 68, 68, 0.3); color: #fca5a5; border-color: #ef4444; animation: pulse 0.8s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    button { background: #0284c7; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer; width: 48%; }
+    button:hover { background: #0369a1; }
+    button.hazard { background: #dc2626; }
+    button.hazard:hover { background: #b91c1c; }
+    .btn-row { display: flex; justify-content: space-between; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel" id="header-panel">
+    <h1>NEUROKINETIC PHYSICAL AI</h1>
+    <div class="subtitle">500 Hz C++23 Safety Kernel & 50 Hz FNO Digital Twin</div>
+    <div>
+      <span class="badge badge-cxx">500 Hz C++23 KERNEL</span>
+      <span class="badge badge-fno">FNO SURROGATE</span>
+      <span class="badge badge-cbf">ACTIVE CBF QP</span>
+    </div>
+    <div class="clamp-alert" id="clamp-status">STATUS: NOMINAL / SAFE INVARIANT PRESERVED</div>
+  </div>
+
+  <div class="hud-panel" id="telemetry-panel">
+    <div class="metric-row"><span class="metric-label">500 Hz Kernel Tick</span><span class="metric-val" id="val-tick">0</span></div>
+    <div class="metric-row"><span class="metric-label">Joint 5 Position</span><span class="metric-val" id="val-pos5">0.000 rad</span></div>
+    <div class="metric-row"><span class="metric-label">Joint 5 Applied Torque</span><span class="metric-val" id="val-torque5">0.00 Nm</span></div>
+    <div class="metric-row"><span class="metric-label">Obstacle Barrier Margin</span><span class="metric-val" id="val-margin">0.000 m</span></div>
+    <div class="metric-row"><span class="metric-label">Peak Structural Stress</span><span class="metric-val" id="val-stress">0.0 MPa</span></div>
+    <div class="metric-row"><span class="metric-label">Peak Joint Temperature</span><span class="metric-val" id="val-temp">0.0 °C</span></div>
+    <div class="metric-row"><span class="metric-label">FNO Surrogate Latency</span><span class="metric-val" id="val-fno">0.00 ms</span></div>
+  </div>
+
+  <div class="hud-panel" id="control-panel">
+    <div class="subtitle" style="margin-bottom: 6px;">PHYSICAL INVARIANT STRESS TEST</div>
+    <p style="font-size: 11px; color: #94a3b8; line-height: 15px;">
+      Simulate an unconstrained VLA policy commanding hazardous torque (+45 Nm) directly into the obstacle zone. Observe C++ CBF overriding torques while FNO monitors localized stress.
+    </p>
+    <div class="btn-row">
+      <button class="hazard" onclick="triggerHazard()">DISPATCH HAZARD (+45 Nm)</button>
+      <button onclick="triggerReset()">HOLD / ZERO TORQUE</button>
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f19);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(2.4, 2.0, 2.6);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.6, 0);
+    controls.update();
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+    scene.add(new THREE.GridHelper(6, 30, 0x334155, 0x1e293b));
+
+    const joints = [];
+    const links = [];
+    const linkLengths = [0.35, 0.40, 0.35, 0.35, 0.25, 0.20, 0.15];
+    let parentObj = scene;
+    
+    for (let i = 0; i < 7; i++) {
+      const jointGroup = new THREE.Group();
+      if (i === 0) jointGroup.position.set(0, 0.05, 0);
+      else jointGroup.position.set(0, linkLengths[i - 1], 0);
+
+      const linkMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.055, linkLengths[i], 16),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3, metalness: 0.8 })
+      );
+      linkMesh.position.set(0, linkLengths[i] / 2, 0);
+      jointGroup.add(linkMesh);
+
+      const pivotMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.065, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 })
+      );
+      jointGroup.add(pivotMesh);
+      parentObj.add(jointGroup);
+      parentObj = jointGroup;
+      joints.push(jointGroup);
+      links.push(linkMesh);
+    }
+
+    const obsPos = new THREE.Vector3(0.50, 0.45, 0.30);
+    const obsMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 32, 32), new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.5 }));
+    obsMesh.position.copy(obsPos);
+    scene.add(obsMesh);
+
+    const bubbleMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 32), new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true, transparent: true, opacity: 0.35 }));
+    bubbleMesh.position.copy(obsPos);
+    scene.add(bubbleMesh);
+
+    const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      for (let i = 0; i < 7; i++) {
+        if (i % 2 === 0) joints[i].rotation.y = data.positions[i];
+        else joints[i].rotation.z = data.positions[i];
+        const stressRatio = Math.min(data.stresses[i] / 80.0, 1.0);
+        links[i].material.color.setHSL(0.6 - (stressRatio * 0.6), 0.9, 0.5);
+      }
+
+      document.getElementById('val-tick').innerText = data.sequence.toLocaleString();
+      document.getElementById('val-pos5').innerText = `${data.positions[5].toFixed(3)} rad`;
+      document.getElementById('val-torque5').innerText = `${data.torques[5].toFixed(2)} Nm`;
+      document.getElementById('val-margin').innerText = `${data.barrier_margin.toFixed(3)} m`;
+      document.getElementById('val-stress').innerText = `${data.max_stress.toFixed(1)} MPa`;
+      document.getElementById('val-temp').innerText = `${data.max_temp.toFixed(1)} °C`;
+      document.getElementById('val-fno').innerText = `${data.fno_eval_ms} ms`;
+
+      const clampEl = document.getElementById('clamp-status');
+      if (data.clamped) {
+        clampEl.innerText = "WARNING: CBF ACTIVE — TORQUE OVERRIDDEN";
+        clampEl.className = "clamp-alert active";
+      } else {
+        clampEl.innerText = "STATUS: NOMINAL / SAFE INVARIANT PRESERVED";
+        clampEl.className = "clamp-alert";
+      }
+    };
+
+    function triggerHazard() { fetch('/api/v1/actuate/hazard', { method: 'POST' }); }
+    function triggerReset() { fetch('/api/v1/actuate/reset', { method: 'POST' }); }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
