@@ -1,0 +1,470 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
+  <defs>
+    <!-- Daylight Canvas & Card Gradients -->
+    <linearGradient id="canvas-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#f1f5f9" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+
+    <linearGradient id="card-grad-white" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+
+    <linearGradient id="card-grad-vla" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#eff6ff" />
+    </linearGradient>
+
+    <linearGradient id="card-grad-fno" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0fdf4" />
+    </linearGradient>
+
+    <linearGradient id="card-grad-cxx" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#faf5ff" />
+    </linearGradient>
+
+    <linearGradient id="card-grad-ui" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f9ff" />
+    </linearGradient>
+
+    <!-- Daylight Soft Drop Shadow -->
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+
+    <!-- Photon Glow (Daylight High-Contrast) -->
+    <filter id="photon-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur1" />
+      <feGaussianBlur stdDeviation="1" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur1" />
+        <feMergeNode in="blur2" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed" />
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569" />
+    </marker>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 800; fill: #0f172a; letter-spacing: 0.5px; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 500; fill: #475569; }
+    .tier-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .card-header { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; }
+    .card-meta { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; }
+    .body-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 11px; fill: #334155; font-weight: 400; line-height: 15px; }
+    .badge-text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; font-weight: 700; }
+    .wire-label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 10px; font-weight: 700; fill: #475569; }
+  </style>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="900" fill="url(#canvas-bg)" />
+
+  <!-- Blueprint Background Grid -->
+  <g opacity="0.45" stroke="#cbd5e1" stroke-width="0.8">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" />
+    </pattern>
+    <rect width="1200" height="900" fill="url(#grid)" />
+  </g>
+
+  <!-- Header Section -->
+  <g transform="translate(60, 45)">
+    <circle cx="12" cy="12" r="10" fill="#7c3aed" opacity="0.15">
+      <animate attributeName="r" values="8;14;8" dur="2.5s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0.15;0.35;0.15" dur="2.5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="12" cy="12" r="5" fill="#7c3aed" />
+    <text x="32" y="16" class="title">NeuroKinetic : Physical AI Autonomous Fleet Architecture</text>
+    <text x="32" y="32" class="subtitle">Multi-Rate Closed Loop : 2–5 Hz Cognitive VLA • 50 Hz FNO Neural Physics Twin • 500 Hz C++23 CBF Safety Kernel</text>
+  </g>
+
+  <!-- ==================== LEFT COLUMN: MULTI-RATE KINEMATIC PIPELINE ==================== -->
+  <g transform="translate(60, 95)">
+    <rect x="0" y="0" width="670" height="770" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4" />
+    <text x="24" y="28" class="tier-title" fill="#1e293b">Autonomous Fleet Execution Mesh (Co-Located Pod / Edge Node)</text>
+
+    <!-- TIER 1: Cognitive VLA & Task Planner (2-5 Hz) -->
+    <g transform="translate(20, 42)">
+      <rect x="0" y="0" width="630" height="120" rx="10" fill="url(#card-grad-vla)" stroke="#2563eb" stroke-width="2" filter="url(#card-shadow)" />
+      
+      <rect x="18" y="16" width="135" height="22" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="1" />
+      <text x="85" y="31" text-anchor="middle" class="badge-text" fill="#1d4ed8">TIER 1 : 2–5 Hz SLOW</text>
+
+      <rect x="160" y="16" width="145" height="22" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="232" y="31" text-anchor="middle" class="badge-text" fill="#475569">PYTHON 3.14 / PYTORCH</text>
+
+      <text x="315" y="32" class="card-header">Cognitive VLA Planner &amp; Action Chunker</text>
+
+      <circle cx="605" cy="24" r="4" fill="#2563eb">
+        <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" />
+      </circle>
+
+      <g transform="translate(18, 50)">
+        <rect x="0" y="0" width="285" height="56" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="18" class="badge-text" fill="#0284c7">Multimodal Ingestion</text>
+        <text x="12" y="34" class="body-text">RGB-D stereo cameras &amp; spatial voxel grids</text>
+        <text x="12" y="48" class="body-text" fill="#475569">Natural language: 'Transfer hot payload'</text>
+
+        <rect x="300" y="0" width="294" height="56" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="312" y="18" class="badge-text" fill="#2563eb">Cubic Hermite Splines</text>
+        <text x="312" y="34" class="body-text">30-setpoint trajectory action chunks (50 Hz)</text>
+        <text x="312" y="48" class="body-text" font-weight="600" fill="#059669">Minimum-jerk end-effector interpolation</text>
+      </g>
+    </g>
+
+    <!-- TIER 2: Surrogate Neural Physics Twin (50 Hz) -->
+    <g transform="translate(20, 185)">
+      <rect x="0" y="0" width="630" height="125" rx="10" fill="url(#card-grad-fno)" stroke="#059669" stroke-width="2" filter="url(#card-shadow)" />
+
+      <rect x="18" y="16" width="130" height="22" rx="4" fill="#d1fae5" stroke="#059669" stroke-width="1" />
+      <text x="83" y="31" text-anchor="middle" class="badge-text" fill="#047857">TIER 2 : 50 Hz MID</text>
+
+      <rect x="156" y="16" width="155" height="22" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="233" y="31" text-anchor="middle" class="badge-text" fill="#475569">SPECTRAL CONVOLUTION</text>
+
+      <text x="320" y="32" class="card-header">Fourier Neural Operator (FNO) Physics Surrogate</text>
+
+      <circle cx="605" cy="24" r="4" fill="#059669">
+        <animate attributeName="opacity" values="1;0.3;1" dur="1.0s" repeatCount="indefinite" />
+      </circle>
+
+      <g transform="translate(18, 50)">
+        <rect x="0" y="0" width="285" height="60" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="18" class="badge-text" fill="#047857">Fourier Space Operator (1D FNO)</text>
+        <text x="12" y="34" class="body-text">Continuous PDE mapping via rFFT modes</text>
+        <text x="12" y="48" class="body-text" font-weight="700" fill="#059669">Field solved in 0.076–0.171 ms (&lt; 5 ms SLA)</text>
+
+        <rect x="300" y="0" width="294" height="60" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="312" y="18" class="badge-text" fill="#d97706">Thermodynamics &amp; Stress</text>
+        <text x="312" y="34" class="body-text">Joule heating power dissipation: |tau * q_dot|</text>
+        <text x="312" y="48" class="body-text" font-weight="600" fill="#dc2626">von Mises stress tensors (Peak: 64.0 MPa)</text>
+      </g>
+    </g>
+
+    <!-- IPC CONDUIT: POSIX Shared Memory Ribbon -->
+    <g transform="translate(145, 330)">
+      <rect x="0" y="0" width="380" height="30" rx="15" fill="#fffbeb" stroke="#d97706" stroke-width="1.8" filter="url(#card-shadow)" />
+      <text x="190" y="19" text-anchor="middle" class="wire-label" fill="#b45309">POSIX SHM: /tmp/neurokinetic_ipc.shm (&lt; 6 µs Seqlock)</text>
+      <circle cx="22" cy="15" r="4" fill="#d97706">
+        <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="358" cy="15" r="4" fill="#d97706">
+        <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
+      </circle>
+    </g>
+
+    <!-- TIER 3: Deterministic C++23 Safety Kernel (500 Hz) -->
+    <g transform="translate(20, 380)">
+      <rect x="0" y="0" width="630" height="205" rx="10" fill="url(#card-grad-cxx)" stroke="#7c3aed" stroke-width="2.2" filter="url(#card-shadow)" />
+
+      <rect x="18" y="16" width="135" height="22" rx="4" fill="#ede9fe" stroke="#7c3aed" stroke-width="1" />
+      <text x="85" y="31" text-anchor="middle" class="badge-text" fill="#6d28d9">TIER 3 : 500 Hz FAST</text>
+
+      <rect x="160" y="16" width="165" height="22" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="242" y="31" text-anchor="middle" class="badge-text" fill="#475569">HARD REAL-TIME C++23</text>
+
+      <text x="335" y="32" class="card-header">Control Barrier Function (CBF-QP) Safety Kernel</text>
+
+      <circle cx="605" cy="24" r="4" fill="#7c3aed">
+        <animate attributeName="opacity" values="1;0.3;1" dur="0.7s" repeatCount="indefinite" />
+      </circle>
+
+      <!-- Twin Sub-Cards in Tier 3 -->
+      <g transform="translate(18, 52)">
+        <!-- Left: CBF Active-Set QP Solver -->
+        <rect x="0" y="0" width="285" height="135" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="20" class="badge-text" fill="#7c3aed">Convex Active-Set QP (Eigen3)</text>
+        <text x="12" y="38" class="body-text">min 1/2 ||u - u_des||^2  s.t.  A_cons * u &gt;= b_cons</text>
+        <text x="12" y="54" class="body-text">Forward invariance of safe set: L_g*h*u &gt;= -gamma*h</text>
+        <text x="12" y="74" class="body-text" font-weight="700" fill="#059669">Verified P50: 1.29 µs | P99: 1.54 µs</text>
+        <text x="12" y="90" class="body-text" fill="#475569">Zero dynamic heap allocation on hot path</text>
+        <text x="12" y="108" class="body-text" font-weight="700" fill="#dc2626">Hazard Clamped: +40.0 Nm -&gt; 0.33 Nm</text>
+        <text x="12" y="122" class="body-text" fill="#475569">Pins Joint 5 at 2.893 rad (0.003 rad margin)</text>
+
+        <!-- Right: Memory Layout & Limits -->
+        <rect x="300" y="0" width="294" height="135" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        <text x="312" y="20" class="badge-text" fill="#d97706">64-Byte Cache-Aligned Structs</text>
+        <text x="312" y="38" class="body-text">TelemetrySlot &amp; CommandSlot with Seqlock</text>
+        <text x="312" y="54" class="body-text">Eliminates false sharing &amp; lock contention</text>
+        <text x="312" y="74" class="body-text" font-weight="600" fill="#1e293b">Kinematic Hard Boundaries:</text>
+        <text x="312" y="90" class="body-text">• Joint Limits: [-2.89, +2.89] rad</text>
+        <text x="312" y="106" class="body-text">• Torque Envelope: 87.0 Nm max effort</text>
+        <text x="312" y="122" class="body-text" font-weight="600" fill="#0284c7">• Obstacle Safety Bubble: 8.0 cm buffer</text>
+      </g>
+    </g>
+
+    <!-- TIER 4: Physical Actuator & Kinematic Simulation -->
+    <g transform="translate(20, 610)">
+      <rect x="0" y="0" width="630" height="130" rx="10" fill="url(#card-grad-white)" stroke="#64748b" stroke-width="1.8" filter="url(#card-shadow)" />
+
+      <rect x="18" y="16" width="130" height="22" rx="4" fill="#f1f5f9" stroke="#64748b" stroke-width="1" />
+      <text x="83" y="31" text-anchor="middle" class="badge-text" fill="#334155">ROBOT FLEET I/O</text>
+
+      <text x="160" y="32" class="card-header">7-DOF Manipulator / Humanoid Joint Actuation</text>
+
+      <g transform="translate(18, 50)">
+        <rect x="0" y="0" width="285" height="64" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="12" y="18" class="badge-text" fill="#475569">Actuator Torque Drivers</text>
+        <text x="12" y="34" class="body-text">Safe applied torques delivered at 500 Hz</text>
+        <text x="12" y="50" class="body-text" fill="#059669">Guaranteed zero mechanical joint collision</text>
+
+        <rect x="300" y="0" width="294" height="64" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="312" y="18" class="badge-text" fill="#475569">Encoder Feedback Loop</text>
+        <text x="312" y="34" class="body-text">Joint angles [q] &amp; angular velocities [q_dot]</text>
+        <text x="312" y="50" class="body-text" fill="#2563eb">Virtual inertia &amp; damping state integration</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== RIGHT COLUMN: MISSION CONTROL & OBSERVABILITY ==================== -->
+  <g transform="translate(760, 95)">
+    <rect x="0" y="0" width="380" height="770" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <text x="24" y="28" class="tier-title" fill="#0369a1">Mission Control &amp; Observability</text>
+
+    <!-- Card 1: 3D WebGL Digital Twin (Three.js) -->
+    <g transform="translate(20, 42)">
+      <rect x="0" y="0" width="340" height="235" rx="10" fill="url(#card-grad-ui)" stroke="#0284c7" stroke-width="2" filter="url(#card-shadow)" />
+      
+      <rect x="18" y="16" width="115" height="22" rx="4" fill="#e0f2fe" stroke="#0284c7" stroke-width="1" />
+      <text x="75" y="31" text-anchor="middle" class="badge-text" fill="#0369a1">THREE.JS / WEBGL</text>
+
+      <text x="145" y="32" class="card-header">3D Digital Twin Canvas</text>
+
+      <circle cx="315" cy="24" r="4" fill="#0284c7">
+        <animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite" />
+      </circle>
+
+      <g transform="translate(18, 52)">
+        <text x="0" y="16" class="body-text" font-weight="700" fill="#0f172a">• Articulated 7-DOF Kinematic Rendering</text>
+        <text x="10" y="32" class="body-text">Real-time joint pivots &amp; cylindrical arm links</text>
+
+        <text x="0" y="54" class="body-text" font-weight="700" fill="#059669">• Dynamic FNO Stress Heatmap</text>
+        <text x="10" y="70" class="body-text">Color-mapped link shaders: Blue -&gt; Orange -&gt; Red</text>
+        <text x="10" y="86" class="body-text">Directly drives HSL shaders from von Mises stress</text>
+
+        <text x="0" y="108" class="body-text" font-weight="700" fill="#dc2626">• Spatial Obstacle &amp; Barrier Wireframe</text>
+        <text x="10" y="124" class="body-text">Red solid obstacle sphere @ (0.50, 0.45, 0.30) m</text>
+        <text x="10" y="140" class="body-text">Transparent wireframe Control Barrier envelope</text>
+
+        <text x="0" y="162" class="body-text" font-weight="700" fill="#7c3aed">• HUD Live Telemetry Overlays</text>
+        <text x="10" y="178" class="body-text">Tick count, applied torques, FNO latency ms</text>
+      </g>
+    </g>
+
+    <!-- Card 2: FastAPI Telemetry & WebSocket Gateway -->
+    <g transform="translate(20, 295)">
+      <rect x="0" y="0" width="340" height="175" rx="10" fill="url(#card-grad-white)" stroke="#cbd5e1" stroke-width="1.5" filter="url(#card-shadow)" />
+
+      <rect x="18" y="16" width="135" height="22" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+      <text x="85" y="31" text-anchor="middle" class="badge-text" fill="#475569">FASTAPI GATEWAY</text>
+
+      <text x="165" y="32" class="card-header">WebSocket Hub (:8000)</text>
+
+      <circle cx="315" cy="24" r="4" fill="#059669">
+        <animate attributeName="opacity" values="1;0.3;1" dur="1.1s" repeatCount="indefinite" />
+      </circle>
+
+      <g transform="translate(18, 52)">
+        <rect x="0" y="0" width="304" height="48" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="10" y="18" class="badge-text" fill="#0284c7">WebSocket: /ws/telemetry</text>
+        <text x="10" y="34" class="body-text">50 Hz non-blocking kinematic broadcast</text>
+
+        <rect x="0" y="58" width="304" height="54" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1" />
+        <text x="10" y="18" class="badge-text" fill="#dc2626">POST /api/v1/actuate/hazard</text>
+        <text x="10" y="34" class="body-text">Interactive HUD Button: Injects +45 Nm spike</text>
+        <text x="10" y="48" class="body-text" font-weight="600" fill="#b91c1c">Demonstrates live microsecond CBF override</text>
+      </g>
+    </g>
+
+    <!-- Card 3: Production SLAS & Empirical Metrics -->
+    <g transform="translate(20, 488)">
+      <rect x="0" y="0" width="340" height="252" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#card-shadow)" />
+
+      <text x="18" y="26" class="card-header" fill="#4c1d95">Empirically Verified Benchmarks</text>
+
+      <g transform="translate(18, 40)">
+        <rect x="0" y="0" width="304" height="34" rx="5" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1" />
+        <text x="10" y="14" class="body-text" fill="#6d28d9">CBF Solver Latency (10k ticks)</text>
+        <text x="10" y="28" class="badge-text" fill="#4c1d95">P50: 1.29 µs | P99: 1.54 µs (SLA: &lt; 800 µs)</text>
+
+        <rect x="0" y="42" width="304" height="34" rx="5" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" />
+        <text x="10" y="14" class="body-text" fill="#047857">Surrogate FNO Physics Time</text>
+        <text x="10" y="28" class="badge-text" fill="#065f46">0.076–0.171 ms (Target: &lt; 5.0 ms)</text>
+
+        <rect x="0" y="84" width="304" height="34" rx="5" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1" />
+        <text x="10" y="14" class="body-text" fill="#1d4ed8">Zero-Copy IPC Transit</text>
+        <text x="10" y="28" class="badge-text" fill="#1e40af">&lt; 6.0 µs (/tmp/neurokinetic_ipc.shm)</text>
+
+        <rect x="0" y="126" width="304" height="34" rx="5" fill="#fffbeb" stroke="#fde68a" stroke-width="1" />
+        <text x="10" y="14" class="body-text" fill="#b45309">Safety Clamping Invariant</text>
+        <text x="10" y="28" class="badge-text" fill="#92400e">+40.0 Nm Clamped to 0.33 Nm (0 Breaches)</text>
+
+        <rect x="0" y="168" width="304" height="34" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+        <text x="10" y="14" class="body-text" fill="#334155">Heap Allocations on Hot Path</text>
+        <text x="10" y="28" class="badge-text" fill="#0f172a">0 Bytes (Pure Pre-Allocated Buffers)</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ==================== FLOW CONDUITS / EDGES (BASE CHANNELS) ==================== -->
+  <!-- VLA to FNO -->
+  <path id="path-vla-fno" d="M 335 257 L 335 280" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 335 257 L 335 280" stroke="#0284c7" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-blue)" />
+
+  <!-- FNO to SHM Ribbon -->
+  <path id="path-fno-shm" d="M 335 405 L 335 425" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 335 405 L 335 425" stroke="#059669" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-green)" />
+
+  <!-- SHM Ribbon to C++ CBF -->
+  <path id="path-shm-cbf" d="M 335 455 L 335 475" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 335 455 L 335 475" stroke="#7c3aed" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-purple)" />
+
+  <!-- C++ CBF to Actuators -->
+  <path id="path-cbf-actuator" d="M 335 680 L 335 705" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 335 680 L 335 705" stroke="#7c3aed" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-purple)" />
+
+  <!-- Actuator Feedback Loop up to C++ CBF -->
+  <path id="path-actuator-feedback" d="M 200 705 L 200 680" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" fill="none" />
+  <path d="M 200 705 L 200 680" stroke="#64748b" stroke-width="2" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow-slate)" />
+
+  <!-- SHM Telemetry to FastAPI Gateway -->
+  <path id="path-shm-fastapi" d="M 525 440 L 780 440" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 525 440 L 780 440" stroke="#d97706" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-amber)" />
+
+  <!-- FastAPI Gateway up to Three.js UI -->
+  <path id="path-fastapi-ui" d="M 930 390 L 930 372" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 930 390 L 930 372" stroke="#0284c7" stroke-width="2.5" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-blue)" />
+
+  <!-- Hazard Trigger from UI down to FastAPI Gateway -->
+  <path id="path-hazard-inject" d="M 970 372 L 970 390" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" fill="none" />
+  <path d="M 970 372 L 970 390" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4 3" stroke-opacity="0.8" fill="none" marker-end="url(#arrow-red)" />
+
+  <!-- Wire Annotations -->
+  <g transform="translate(345, 260)">
+    <rect x="0" y="0" width="130" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+    <text x="6" y="13" class="wire-label" fill="#0284c7">Trajectory (50 Hz)</text>
+  </g>
+
+  <g transform="translate(560, 420)">
+    <rect x="0" y="0" width="145" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+    <text x="6" y="13" class="wire-label" fill="#d97706">Telemetry Read (&lt; 6 µs)</text>
+  </g>
+
+  <g transform="translate(345, 683)">
+    <rect x="0" y="0" width="135" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+    <text x="6" y="13" class="wire-label" fill="#7c3aed">Safe Torques (500 Hz)</text>
+  </g>
+
+  <g transform="translate(85, 683)">
+    <rect x="0" y="0" width="105" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+    <text x="6" y="13" class="wire-label" fill="#64748b">Encoders (q, q_dot)</text>
+  </g>
+
+  <!-- ==================== ANIMATED PHOTONS (DAYLIGHT VIBRANT) ==================== -->
+  <g filter="url(#photon-glow)">
+    <!-- VLA -> FNO Photon -->
+    <circle r="4" fill="#0284c7">
+      <animateMotion dur="0.9s" repeatCount="indefinite">
+        <mpath href="#path-vla-fno" />
+      </animateMotion>
+    </circle>
+    <circle r="2" fill="#ffffff">
+      <animateMotion dur="0.9s" begin="0.45s" repeatCount="indefinite">
+        <mpath href="#path-vla-fno" />
+      </animateMotion>
+    </circle>
+
+    <!-- FNO -> SHM Photon -->
+    <circle r="4" fill="#059669">
+      <animateMotion dur="0.8s" repeatCount="indefinite">
+        <mpath href="#path-fno-shm" />
+      </animateMotion>
+    </circle>
+
+    <!-- SHM -> C++ CBF Photon -->
+    <circle r="4.5" fill="#7c3aed">
+      <animateMotion dur="0.7s" repeatCount="indefinite">
+        <mpath href="#path-shm-cbf" />
+      </animateMotion>
+    </circle>
+    <circle r="2" fill="#ffffff">
+      <animateMotion dur="0.7s" begin="0.35s" repeatCount="indefinite">
+        <mpath href="#path-shm-cbf" />
+      </animateMotion>
+    </circle>
+
+    <!-- C++ CBF -> Actuator Photon -->
+    <circle r="5" fill="#7c3aed">
+      <animateMotion dur="0.6s" repeatCount="indefinite">
+        <mpath href="#path-cbf-actuator" />
+      </animateMotion>
+    </circle>
+    <circle r="2.5" fill="#ffffff">
+      <animateMotion dur="0.6s" begin="0.3s" repeatCount="indefinite">
+        <mpath href="#path-cbf-actuator" />
+      </animateMotion>
+    </circle>
+
+    <!-- Actuator -> C++ CBF Feedback Photon -->
+    <circle r="3.5" fill="#64748b">
+      <animateMotion dur="0.6s" repeatCount="indefinite">
+        <mpath href="#path-actuator-feedback" />
+      </animateMotion>
+    </circle>
+
+    <!-- SHM -> FastAPI Telemetry Photon -->
+    <circle r="4.5" fill="#d97706">
+      <animateMotion dur="1.2s" repeatCount="indefinite">
+        <mpath href="#path-shm-fastapi" />
+      </animateMotion>
+    </circle>
+    <circle r="2.5" fill="#ffffff">
+      <animateMotion dur="1.2s" begin="0.6s" repeatCount="indefinite">
+        <mpath href="#path-shm-fastapi" />
+      </animateMotion>
+    </circle>
+
+    <!-- FastAPI -> Three.js UI Stream Photon -->
+    <circle r="4" fill="#0284c7">
+      <animateMotion dur="1.0s" repeatCount="indefinite">
+        <mpath href="#path-fastapi-ui" />
+      </animateMotion>
+    </circle>
+
+    <!-- Hazard Injection Trigger Photon (Red Alert) -->
+    <circle r="4.5" fill="#dc2626">
+      <animateMotion dur="1.4s" repeatCount="indefinite">
+        <mpath href="#path-hazard-inject" />
+      </animateMotion>
+    </circle>
+    <circle r="2" fill="#ffffff">
+      <animateMotion dur="1.4s" begin="0.7s" repeatCount="indefinite">
+        <mpath href="#path-hazard-inject" />
+      </animateMotion>
+    </circle>
+  </g>
+</svg>
