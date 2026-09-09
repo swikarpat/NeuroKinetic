@@ -10,11 +10,10 @@
     body { background: #f8fafc; color: #0f172a; overflow: hidden; }
     #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
-    /* Daylight Studio HUD Panels */
     .hud-panel {
-      position: absolute; z-index: 10; background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(16px); border: 1px solid rgba(203, 213, 225, 0.9);
-      border-radius: 10px; padding: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      position: absolute; z-index: 10; background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(18px); border: 1px solid rgba(203, 213, 225, 0.85);
+      border-radius: 12px; padding: 16px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.09);
     }
     #header-panel { top: 20px; left: 20px; width: 440px; }
     #telemetry-panel { top: 20px; right: 20px; width: 380px; }
@@ -28,7 +27,6 @@
     h1 { font-size: 17px; font-weight: 800; color: #0284c7; letter-spacing: 0.5px; margin-bottom: 4px; }
     .subtitle { font-size: 11px; color: #64748b; margin-bottom: 10px; font-weight: 600; }
     
-    /* Daylight Badges */
     .badge {
       display: inline-block; padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;
       margin-right: 4px; letter-spacing: 0.5px;
@@ -37,23 +35,20 @@
     .badge-fno { background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid #6ee7b7; }
     .badge-watchdog { background: rgba(2, 132, 199, 0.12); color: #0369a1; border: 1px solid #7dd3fc; }
 
-    /* Persona Switcher Tabs */
     .persona-toggle {
       display: flex; gap: 6px; margin: 10px 0; background: #f1f5f9; padding: 4px; border-radius: 8px;
       border: 1px solid #e2e8f0;
     }
     .persona-btn {
-      flex: 1; padding: 6px; border: none; background: transparent; color: #64748b; font-size: 11px;
+      flex: 1; padding: 7px; border: none; background: transparent; color: #64748b; font-size: 11px;
       font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s;
     }
     .persona-btn.active { background: #0284c7; color: #ffffff; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35); }
 
-    /* Metrics */
     .metric-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .metric-label { color: #64748b; font-weight: 500; }
     .metric-val { font-weight: 700; color: #0f172a; font-family: monospace; }
     
-    /* High-Visibility Status Banners */
     .clamp-alert {
       padding: 9px; border-radius: 6px; margin-top: 8px; text-align: center; font-weight: 800; font-size: 12px;
       background: rgba(16, 185, 129, 0.15); color: #065f46; border: 1px solid #34d399; transition: all 0.2s;
@@ -66,7 +61,6 @@
     }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
 
-    /* Sliders & Controls */
     .slider-container { margin-top: 6px; }
     .slider-header { display: flex; justify-content: space-between; font-size: 11px; color: #475569; margin-bottom: 4px; font-weight: 600; }
     input[type=range] { width: 100%; accent-color: #0284c7; cursor: pointer; }
@@ -74,27 +68,26 @@
     button.action {
       background: #0284c7; color: #ffffff; border: none; padding: 9px 14px; border-radius: 6px;
       font-weight: 700; font-size: 11px; cursor: pointer; transition: background 0.2s; width: 48%;
-      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
+      box-shadow: 0 2px 5px rgba(2, 132, 199, 0.25);
     }
     button.action:hover { background: #0369a1; }
-    button.action.hazard { background: #dc2626; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25); }
+    button.action.hazard { background: #dc2626; box-shadow: 0 2px 5px rgba(220, 38, 38, 0.25); }
     button.action.hazard:hover { background: #b91c1c; }
     .btn-row { display: flex; justify-content: space-between; margin-top: 10px; }
 
-    /* RocksDB Replay Panel */
     .replay-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .replay-badge {
       background: #e2e8f0; color: #0369a1; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
     }
     .incident-select {
-      background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px; font-size: 11px; width: 60%;
+      background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; font-size: 11px; width: 60%;
     }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <!-- Top Left Header & Persona Selector -->
+  <!-- Header & Persona Switcher -->
   <div class="hud-panel" id="header-panel">
     <h1>NEUROKINETIC PHYSICAL AI</h1>
     <div class="subtitle">Multi-Domain Deterministic Safety &amp; FNO Digital Twin</div>
@@ -113,7 +106,7 @@
     <div class="clamp-alert" id="clamp-status">STATUS: NOMINAL / SAFE INVARIANT PRESERVED</div>
   </div>
 
-  <!-- Top Right Telemetry Panel -->
+  <!-- Telemetry HUD -->
   <div class="hud-panel" id="telemetry-panel">
     <div class="subtitle" style="margin-bottom: 4px;">SYSTEM TELEMETRY</div>
     <div class="metric-row"><span class="metric-label" id="lbl-tick">500 Hz Kernel Tick</span><span class="metric-val" id="val-tick">0</span></div>
@@ -125,7 +118,7 @@
     <div class="metric-row"><span class="metric-label">FNO Physics Latency</span><span class="metric-val" id="val-fno">0.00 ms</span></div>
   </div>
 
-  <!-- Mid Right Tuning Panel -->
+  <!-- Active CBF Tuning -->
   <div class="hud-panel" id="tuning-panel">
     <div class="subtitle" style="margin-bottom: 4px;">ACTIVE CBF CONSTRAINT TUNING</div>
     
@@ -146,7 +139,7 @@
     </div>
   </div>
 
-  <!-- Bottom Left Stress Test Controls -->
+  <!-- Stress Test Panel -->
   <div class="hud-panel" id="control-panel">
     <div class="subtitle" style="margin-bottom: 4px;">PHYSICAL INVARIANT STRESS TEST</div>
     <p style="font-size: 11px; color: #64748b; line-height: 14px;" id="lbl-scenario-desc">
@@ -158,7 +151,7 @@
     </div>
   </div>
 
-  <!-- Bottom Center RocksDB Flight Recorder Time-Travel Scrubber -->
+  <!-- RocksDB Replay Scrubber -->
   <div class="hud-panel" id="replay-panel">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <span class="subtitle" style="margin: 0;">ROCKSDB TIME-TRAVEL BLACK-BOX (cf_cbf_interventions)</span>
@@ -184,197 +177,344 @@
     let currentPersona = 'ARM';
     let currentMargin = 0.08;
 
-    // 1. Daylight Three.js Scene Setup
+    // 1. Studio Daylight Scene Setup
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf1f5f9); // Clean studio daylight background
+    scene.background = new THREE.Color(0xf1f5f9);
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(2.4, 2.0, 2.6);
+    camera.position.set(2.6, 2.2, 3.0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0.6, 0);
+    controls.target.set(0, 0.5, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
     controls.update();
 
-    // Daylight Illumination: Ambient + Sunlight + Studio Fill
-    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    sunLight.position.set(6, 12, 8);
-    scene.add(sunLight);
+    // Studio Illumination
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.85));
 
-    const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.35);
-    fillLight.position.set(-6, 4, -4);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    keyLight.position.set(6, 14, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.4);
+    fillLight.position.set(-6, 6, -6);
     scene.add(fillLight);
 
-    // Daylight Floor Grid (High-contrast slate on soft light-grey)
-    const grid = new THREE.GridHelper(8, 40, 0x94a3b8, 0xcbd5e1);
+    // Factory Studio Floor
+    const floorMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.8, metalness: 0.1 })
+    );
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.receiveShadow = true;
+    scene.add(floorMesh);
+
+    const grid = new THREE.GridHelper(12, 48, 0x94a3b8, 0xe2e8f0);
+    grid.position.y = 0.002;
     scene.add(grid);
 
     // =========================================================================
-    // MODEL 1: 7-DOF Robotic Arm Group
+    // MODEL 1: 7-DOF Robotic Arm (Franka / KUKA Style)
     // =========================================================================
     const armGroup = new THREE.Group();
     const joints = [];
     const links = [];
     const linkLengths = [0.35, 0.40, 0.35, 0.35, 0.25, 0.20, 0.15];
 
+    // Heavy Base Pedestal
+    const pedestal = new THREE.Group();
+    const basePlate = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.28, 0.06, 32),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 })
+    );
+    basePlate.position.y = 0.03;
+    basePlate.castShadow = true;
+    pedestal.add(basePlate);
+
+    const baseRiser = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.20, 0.12, 32),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.6, roughness: 0.4 })
+    );
+    baseRiser.position.y = 0.12;
+    baseRiser.castShadow = true;
+    pedestal.add(baseRiser);
+
+    const statusRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.165, 0.012, 16, 48),
+      new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+    );
+    statusRing.rotation.x = Math.PI / 2;
+    statusRing.position.y = 0.18;
+    pedestal.add(statusRing);
+    armGroup.add(pedestal);
+
     let parentObj = armGroup;
     for (let i = 0; i < 7; i++) {
       const jointGroup = new THREE.Group();
-      if (i === 0) jointGroup.position.set(0, 0.05, 0);
+      if (i === 0) jointGroup.position.set(0, 0.20, 0);
       else jointGroup.position.set(0, linkLengths[i - 1], 0);
 
-      const geom = new THREE.CylinderGeometry(0.045, 0.055, linkLengths[i], 16);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.25, metalness: 0.6 });
-      const linkMesh = new THREE.Mesh(geom, mat);
-      linkMesh.position.set(0, linkLengths[i] / 2, 0);
-      jointGroup.add(linkMesh);
-
-      const pivotMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.065, 16, 16),
-        new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4, metalness: 0.8 })
+      const motorHousing = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 0.11, 24),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.25 })
       );
-      jointGroup.add(pivotMesh);
+      motorHousing.rotation.z = Math.PI / 2;
+      motorHousing.castShadow = true;
+      jointGroup.add(motorHousing);
+
+      const linkGeom = new THREE.CylinderGeometry(0.045, 0.065, linkLengths[i], 24);
+      const linkMat = new THREE.MeshStandardMaterial({
+        color: 0x0284c7, metalness: 0.5, roughness: 0.35
+      });
+      const linkMesh = new THREE.Mesh(linkGeom, linkMat);
+      linkMesh.position.set(0, linkLengths[i] / 2, 0);
+      linkMesh.castShadow = true;
+      jointGroup.add(linkMesh);
 
       parentObj.add(jointGroup);
       parentObj = jointGroup;
       joints.push(jointGroup);
       links.push(linkMesh);
     }
+
+    // Parallel Gripper End-Effector
+    const wristGroup = joints[6];
+    const gripperBase = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.04, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 })
+    );
+    gripperBase.position.y = 0.17;
+    wristGroup.add(gripperBase);
+
+    const fingerGeom = new THREE.BoxGeometry(0.02, 0.08, 0.025);
+    const fingerMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 });
+    const fingerLeft = new THREE.Mesh(fingerGeom, fingerMat);
+    fingerLeft.position.set(-0.04, 0.22, 0);
+    wristGroup.add(fingerLeft);
+    const fingerRight = new THREE.Mesh(fingerGeom, fingerMat);
+    fingerRight.position.set(0.04, 0.22, 0);
+    wristGroup.add(fingerRight);
+
     scene.add(armGroup);
 
     // =========================================================================
-    // MODEL 2: Cybercab / Autonomous Vehicle Group
+    // MODEL 2: Realistic Cybercab / Autonomous Vehicle (Integrated Coupe)
     // =========================================================================
     const carGroup = new THREE.Group();
     carGroup.visible = false;
 
-    // High-Contrast Graphite / Carbon Chassis
-    const carBodyGeom = new THREE.BoxGeometry(0.9, 0.3, 1.8);
-    const carBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
-    const carBody = new THREE.Mesh(carBodyGeom, carBodyMat);
-    carBody.position.y = 0.25;
-    carGroup.add(carBody);
+    // Body Paint & Glass Materials
+    const carPaint = new THREE.MeshStandardMaterial({
+      color: 0x334155, metalness: 0.85, roughness: 0.25
+    });
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a, metalness: 0.9, roughness: 0.1, transparent: true, opacity: 0.85
+    });
 
-    // Tinted Glass Canopy
-    const cabinGeom = new THREE.ConeGeometry(0.48, 0.55, 4);
-    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.65, roughness: 0.1 });
-    const cabin = new THREE.Mesh(cabinGeom, cabinMat);
-    cabin.rotation.y = Math.PI / 4;
-    cabin.position.set(0, 0.50, -0.05);
-    carGroup.add(cabin);
+    // 1. Lower Chassis & Side Skirts
+    const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.18, 2.2), carPaint);
+    lowerBody.position.set(0, 0.18, 0);
+    lowerBody.castShadow = true;
+    carGroup.add(lowerBody);
 
-    // Daylight Headlight Strip
-    const lightBarGeom = new THREE.BoxGeometry(0.82, 0.04, 0.05);
-    const lightBarMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
-    const lightBar = new THREE.Mesh(lightBarGeom, lightBarMat);
-    lightBar.position.set(0, 0.25, 0.91);
-    carGroup.add(lightBar);
+    // 2. Aerodynamic Sloped Front Hood
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.12, 0.65), carPaint);
+    hood.rotation.x = 0.12;
+    hood.position.set(0, 0.28, 0.70);
+    hood.castShadow = true;
+    carGroup.add(hood);
 
-    // Spinning LiDAR Puck
-    const lidarPod = new THREE.Group();
-    lidarPod.position.set(0, 0.72, -0.05);
-    const lidarCyl = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.08, 0.08, 0.08, 16),
+    // 3. Sloped Windshield (Seamlessly connected to hood and roof)
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.03, 0.60), glassMat);
+    windshield.rotation.x = -0.68;
+    windshield.position.set(0, 0.44, 0.24);
+    carGroup.add(windshield);
+
+    // 4. Tinted Panoramic Glass Roof
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.05, 0.65), glassMat);
+    roof.position.set(0, 0.58, -0.22);
+    roof.castShadow = true;
+    carGroup.add(roof);
+
+    // 5. Fastback Rear Hatch Window
+    const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.03, 0.65), glassMat);
+    rearGlass.rotation.x = 0.52;
+    rearGlass.position.set(0, 0.45, -0.72);
+    carGroup.add(rearGlass);
+
+    // 6. Rear Trunk & Integrated Spoiler Deck
+    const trunkDeck = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.14, 0.35), carPaint);
+    trunkDeck.position.set(0, 0.30, -0.98);
+    trunkDeck.castShadow = true;
+    carGroup.add(trunkDeck);
+
+    // 7. Front Edge-to-Edge Cyan Lightblade
+    const frontLight = new THREE.Mesh(
+      new THREE.BoxGeometry(0.90, 0.04, 0.04),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    frontLight.position.set(0, 0.22, 1.10);
+    carGroup.add(frontLight);
+
+    // 8. Rear Edge-to-Edge Red Taillight
+    const rearLight = new THREE.Mesh(
+      new THREE.BoxGeometry(0.90, 0.04, 0.04),
+      new THREE.MeshBasicMaterial({ color: 0xef4444 })
+    );
+    rearLight.position.set(0, 0.30, -1.10);
+    carGroup.add(rearLight);
+
+    // 9. Roof-Mounted Solid-State LiDAR Sensor (Sitting Flush on Roof)
+    const roofBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.10, 0.04, 24),
       new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 })
     );
-    lidarPod.add(lidarCyl);
-    const lidarSensor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.03, 0.03),
-      new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+    roofBase.position.set(0, 0.62, -0.20);
+    carGroup.add(roofBase);
+
+    const lidarPod = new THREE.Group();
+    lidarPod.position.set(0, 0.65, -0.20);
+    const lidarCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 0.04, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3 })
     );
-    lidarPod.add(lidarSensor);
+    lidarPod.add(lidarCyl);
+    const lidarLens = new THREE.Mesh(
+      new THREE.BoxGeometry(0.11, 0.02, 0.03),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    lidarPod.add(lidarLens);
     carGroup.add(lidarPod);
 
-    // Wheels & Steering Knuckles
-    const wheelGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.10, 16);
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+    // Detailed Wheels & Steering Knuckles
+    function createWheel() {
+      const wheel = new THREE.Group();
+      const tire = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.11, 24),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 })
+      );
+      tire.rotation.z = Math.PI / 2;
+      tire.castShadow = true;
+      wheel.add(tire);
+
+      const rim = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 0.112, 16),
+        new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.2 })
+      );
+      rim.rotation.z = Math.PI / 2;
+      wheel.add(rim);
+
+      const caliper = new THREE.Mesh(
+        new THREE.BoxGeometry(0.03, 0.06, 0.04),
+        new THREE.MeshStandardMaterial({ color: 0xdc2626 })
+      );
+      caliper.position.set(0.04, 0.06, 0);
+      wheel.add(caliper);
+      return wheel;
+    }
 
     const frontLeftKnuckle = new THREE.Group();
-    frontLeftKnuckle.position.set(0.50, 0.16, 0.60);
-    const frontLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
-    frontLeftWheel.rotation.z = Math.PI / 2;
-    frontLeftKnuckle.add(frontLeftWheel);
+    frontLeftKnuckle.position.set(0.53, 0.18, 0.65);
+    frontLeftKnuckle.add(createWheel());
     carGroup.add(frontLeftKnuckle);
 
     const frontRightKnuckle = new THREE.Group();
-    frontRightKnuckle.position.set(-0.50, 0.16, 0.60);
-    const frontRightWheel = new THREE.Mesh(wheelGeom, wheelMat);
-    frontRightWheel.rotation.z = Math.PI / 2;
-    frontRightKnuckle.add(frontRightWheel);
+    frontRightKnuckle.position.set(-0.53, 0.18, 0.65);
+    const frW = createWheel();
+    frW.rotation.y = Math.PI;
+    frontRightKnuckle.add(frW);
     carGroup.add(frontRightKnuckle);
 
-    const rearLeftWheel = new THREE.Mesh(wheelGeom, wheelMat);
-    rearLeftWheel.rotation.z = Math.PI / 2;
-    rearLeftWheel.position.set(0.50, 0.16, -0.60);
-    carGroup.add(rearLeftWheel);
+    const rearLeft = createWheel();
+    rearLeft.position.set(0.53, 0.18, -0.65);
+    carGroup.add(rearLeft);
 
-    const rearRightWheel = new THREE.Mesh(wheelGeom, wheelMat);
-    rearRightWheel.rotation.z = Math.PI / 2;
-    rearRightWheel.position.set(-0.50, 0.16, -0.60);
-    carGroup.add(rearRightWheel);
+    const rearRight = createWheel();
+    rearRight.position.set(-0.53, 0.18, -0.65);
+    rearRight.rotation.y = Math.PI;
+    carGroup.add(rearRight);
 
     scene.add(carGroup);
 
     // =========================================================================
-    // MODEL 3: Delivery Drone Group
+    // MODEL 3: Delivery Drone
     // =========================================================================
     const droneGroup = new THREE.Group();
     droneGroup.visible = false;
-    droneGroup.position.set(0, 1.2, 0);
+    droneGroup.position.set(0, 1.35, 0);
 
-    const droneBodyGeom = new THREE.BoxGeometry(0.35, 0.12, 0.35);
-    const droneBodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.3 });
-    const droneBody = new THREE.Mesh(droneBodyGeom, droneBodyMat);
-    droneGroup.add(droneBody);
+    const fuselageGeom = new THREE.SphereGeometry(0.24, 32, 16);
+    fuselageGeom.scale(1.2, 0.55, 1.6);
+    const fuselage = new THREE.Mesh(
+      fuselageGeom,
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 })
+    );
+    fuselage.castShadow = true;
+    droneGroup.add(fuselage);
 
-    const packageGeom = new THREE.BoxGeometry(0.24, 0.20, 0.24);
-    const packageMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
-    const packageMesh = new THREE.Mesh(packageGeom, packageMat);
-    packageMesh.position.set(0, -0.20, 0);
-    droneGroup.add(packageMesh);
+    const deliveryCargo = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.22, 0.34),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.45 })
+    );
+    deliveryCargo.position.set(0, -0.24, 0);
+    deliveryCargo.castShadow = true;
+    droneGroup.add(deliveryCargo);
 
     const rotorBlades = [];
     const boomAngles = [Math.PI / 4, 3 * Math.PI / 4, 5 * Math.PI / 4, 7 * Math.PI / 4];
+    const armRadius = 0.50;
+
     boomAngles.forEach((angle) => {
       const boom = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.015, 0.015, 0.65, 8),
-        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8 })
+        new THREE.CylinderGeometry(0.02, 0.024, armRadius, 12),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8 })
       );
+      boom.position.set(Math.cos(angle) * (armRadius / 2), 0.02, Math.sin(angle) * (armRadius / 2));
       boom.rotation.z = Math.PI / 2;
-      boom.rotation.y = angle;
+      boom.rotation.y = -angle;
       droneGroup.add(boom);
 
-      const motorMount = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.04, 0.08, 12),
-        new THREE.MeshStandardMaterial({ color: 0x0f172a })
+      const motor = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.045, 0.07, 16),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9 })
       );
-      const dist = 0.38;
-      motorMount.position.set(Math.cos(angle) * dist, 0.04, Math.sin(angle) * dist);
-      droneGroup.add(motorMount);
+      motor.position.set(Math.cos(angle) * armRadius, 0.06, Math.sin(angle) * armRadius);
+      droneGroup.add(motor);
 
-      const bladeGeom = new THREE.BoxGeometry(0.32, 0.005, 0.025);
-      const bladeMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.85 });
-      const blade = new THREE.Mesh(bladeGeom, bladeMat);
-      blade.position.set(Math.cos(angle) * dist, 0.09, Math.sin(angle) * dist);
-      droneGroup.add(blade);
-      rotorBlades.push(blade);
+      const propGroup = new THREE.Group();
+      propGroup.position.set(Math.cos(angle) * armRadius, 0.10, Math.sin(angle) * armRadius);
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.38, 0.006, 0.032),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.8 })
+      );
+      propGroup.add(blade);
+      droneGroup.add(propGroup);
+      rotorBlades.push(propGroup);
     });
 
     scene.add(droneGroup);
 
     // =========================================================================
-    // Dynamic Obstacle & High-Visibility CBF Wireframe Bubble
+    // Dynamic Obstacle & High-Visibility CBF Barrier Forcefield
     // =========================================================================
     const obsMesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.08, 32, 32),
-      new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.3 })
+      new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.4, roughness: 0.3 })
     );
+    obsMesh.castShadow = true;
     scene.add(obsMesh);
 
     let bubbleMesh = new THREE.Mesh(
@@ -385,9 +525,9 @@
 
     function updateObstaclePosition(persona) {
       if (persona === 'CAR') {
-        obsMesh.position.set(0.0, 0.20, 1.8);
+        obsMesh.position.set(0.0, 0.22, 2.1);
       } else if (persona === 'DRONE') {
-        obsMesh.position.set(0.7, 1.25, 0.7);
+        obsMesh.position.set(0.8, 1.4, 0.8);
       } else {
         obsMesh.position.set(0.50, 0.45, 0.30);
       }
@@ -396,7 +536,7 @@
     updateObstaclePosition('ARM');
 
     // =========================================================================
-    // WebSocket Telemetry Ingestion & Real-Time Stress Color Mapping
+    // WebSocket Telemetry Ingestion
     // =========================================================================
     const ws = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
     ws.onmessage = (event) => {
@@ -408,7 +548,6 @@
           if (i % 2 === 0) joints[i].rotation.y = data.positions[i];
           else joints[i].rotation.z = data.positions[i];
 
-          // Daylight FNO Stress Map: Cyan (0.55) -> Amber (0.12) -> Crimson (0.0)
           const stressRatio = Math.min(data.stresses[i] / 80.0, 1.0);
           links[i].material.color.setHSL(0.55 - (stressRatio * 0.55), 0.9, 0.45);
         }
@@ -416,12 +555,12 @@
         const steerAngle = (data.positions[5] - 2.80) * 1.5;
         frontLeftKnuckle.rotation.y = steerAngle;
         frontRightKnuckle.rotation.y = steerAngle;
-        carGroup.rotation.y = steerAngle * 0.2;
-        carGroup.position.x = -steerAngle * 0.3;
+        carGroup.rotation.y = steerAngle * 0.25;
+        carGroup.position.x = -steerAngle * 0.35;
       } else if (currentPersona === 'DRONE') {
         droneGroup.rotation.z = (data.positions[5] - 2.80) * 0.6;
         droneGroup.rotation.x = data.positions[4] * 0.3;
-        droneGroup.position.y = 1.2 + (data.torques[5] * 0.005);
+        droneGroup.position.y = 1.35 + (data.torques[5] * 0.005);
       }
 
       document.getElementById('val-tick').innerText = data.sequence.toLocaleString();
@@ -461,7 +600,7 @@
       updateObstaclePosition(persona);
 
       if (persona === 'CAR') {
-        camera.position.set(0.0, 1.8, 3.2);
+        camera.position.set(0.0, 2.0, 3.6);
         controls.target.set(0.0, 0.4, 0.8);
         document.getElementById('lbl-kinematic').innerText = "Steering Drive Torque";
         document.getElementById('lbl-pos').innerText = "Front Wheel Steering Angle";
@@ -471,8 +610,8 @@
         document.getElementById('lbl-scenario-desc').innerText = "Simulate Cybercab vision occlusion: foundation model commands full throttle (+45 Nm) straight toward a stopped vehicle; C++ Drive-by-Wire CBF halts vehicle 3mm before impact.";
         document.getElementById('btn-hazard').innerText = "DISPATCH HAZARD (BRAKE TEST)";
       } else if (persona === 'DRONE') {
-        camera.position.set(2.2, 2.0, 2.2);
-        controls.target.set(0.0, 1.2, 0.0);
+        camera.position.set(2.4, 2.2, 2.4);
+        controls.target.set(0.0, 1.35, 0.0);
         document.getElementById('lbl-kinematic').innerText = "Rotor Thrust Differential";
         document.getElementById('lbl-pos').innerText = "Pitch / Roll Tilt Angle";
         document.getElementById('lbl-margin').innerText = "3D Airspace Geofence Margin";
@@ -481,7 +620,7 @@
         document.getElementById('lbl-scenario-desc').innerText = "Simulate extreme wind turbulence: policy commands aggressive pitch toward an obstacle; C++ kernel overrides thrust to maintain strict 3D keep-out sphere.";
         document.getElementById('btn-hazard').innerText = "DISPATCH HAZARD (WIND GUST)";
       } else {
-        camera.position.set(2.4, 2.0, 2.6);
+        camera.position.set(2.6, 2.2, 3.0);
         controls.target.set(0.0, 0.6, 0.0);
         document.getElementById('lbl-kinematic').innerText = "Joint 5 Applied Torque";
         document.getElementById('lbl-pos').innerText = "Joint 5 Position";
@@ -558,9 +697,6 @@
       onSelectIncident();
     }
 
-    // =========================================================================
-    // Active Tuning Sliders
-    // =========================================================================
     function onTuningChange() {
       const margin = parseFloat(document.getElementById('input-margin').value);
       const gamma = parseFloat(document.getElementById('input-gamma').value);
@@ -587,18 +723,16 @@
     function triggerHazard() { fetch('/api/v1/actuate/hazard', { method: 'POST' }); }
     function triggerReset() { fetch('/api/v1/actuate/reset', { method: 'POST' }); }
 
-    // =========================================================================
     // Continuous Render Loop
-    // =========================================================================
     function animate() {
       requestAnimationFrame(animate);
 
-      // LiDAR Puck & Drone Propeller Continuous Motion
       lidarPod.rotation.y += 0.08;
-      rotorBlades.forEach((b, idx) => {
-        b.rotation.y += (idx % 2 === 0 ? 0.45 : -0.45);
+      rotorBlades.forEach((prop, idx) => {
+        prop.rotation.y += (idx % 2 === 0 ? 0.50 : -0.50);
       });
 
+      controls.update();
       renderer.render(scene, camera);
     }
     animate();
