@@ -1,4 +1,4 @@
-# NeuroKinetic — Autonomous Fleet VLA Runtime & Physics-Informed Digital Twin
+# NeuroKinetic: Enterprise-Grade Physical AI Runtime, 500 Hz Deterministic CBF Safety Kernel & Multi-Domain Digital Twin Platform
 
 An enterprise-grade, hard real-time Vision-Language-Action (VLA) orchestration runtime, Fourier Neural Operator (FNO) physics surrogate, and deterministic C++23 safety kernel engineered for autonomous robotic fleets (humanoids and 6-DOF/7-DOF manipulators).
 
