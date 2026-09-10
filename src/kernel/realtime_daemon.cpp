@@ -1,6 +1,7 @@
 #include "kernel/cbf_solver.hpp"
 #include "ipc/shm_layout.hpp"
 #include "storage/flight_recorder.hpp"
+#include "neurokinetic/telemetry/telemetry_worker.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -13,6 +14,7 @@ using namespace neurokinetic;
 using namespace neurokinetic::kernel;
 using namespace neurokinetic::ipc;
 using namespace neurokinetic::storage;
+using namespace neurokinetic::telemetry;
 
 std::atomic<bool> g_running{true};
 
@@ -63,6 +65,8 @@ int main() {
         .min_obstacle_distance = 0.08
     };
     ControlBarrierKernel kernel(limits);
+    TelemetryWorker telemetry_worker;
+    telemetry_worker.start();
 
     ManipulatorState state{
         .q = (Eigen::Vector<double, DOF>() << 0.0, 0.2, 0.0, -1.2, 0.0, 2.80, 0.0).finished(),
@@ -181,6 +185,22 @@ int main() {
 
         shm->telemetry.seq.store(current_seq + 2, std::memory_order_release);
 
+        float max_torque_ratio = 0.0f;
+        for (size_t i = 0; i < DOF; ++i) {
+            max_torque_ratio = std::max(max_torque_ratio, static_cast<float>(std::abs(safety.safe_torque(i)) / limits.torque_max(i)));
+        }
+        uint32_t safety_flags = 0;
+        if (flags & 2u) safety_flags |= 1u;
+        if (!result.has_value()) safety_flags |= 2u;
+        if (safety.intervention_triggered) safety_flags |= 4u;
+        telemetry_worker.try_push(KinematicTelemetryFrame{
+            .timestamp_ns = current_ts,
+            .loop_duration_us = static_cast<float>(std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - tick_start).count()),
+            .condition_number = 0.0f,
+            .max_torque_saturation_ratio = max_torque_ratio,
+            .safety_flags = safety_flags
+        });
+
         tick_count++;
         if (tick_count % 1000 == 0) {
             std::cout << "[500 Hz Tick: " << tick_count << "] Margin: " 
@@ -199,6 +219,7 @@ int main() {
 
     std::cout << "\n[Shutdown] Flushing RocksDB and detaching shared memory...\n";
     flight_recorder.flush();
+    telemetry_worker.stop();
     munmap(shm, sizeof(SharedMemorySegment));
     close(shm_fd);
     return 0;
